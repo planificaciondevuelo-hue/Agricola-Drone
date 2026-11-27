@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-idioma-automatico>
+<head>
+<script src="/treinamento/js/manutencao.js?v=1"></script>
+<meta charset="utf-8">
+<!-- APP-TELA -->
+<link rel="manifest" href="/treinamento/app.webmanifest">
+<link rel="apple-touch-icon" href="/treinamento/icones/app-180.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Simulador">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="theme-color" content="#0e1a14">
+<script src="/treinamento/js/app_tela.js?v=ef687926fd7c" defer></script>
+<!-- /APP-TELA -->
+<script src="js/dispositivo.js?v=506ec99d2d87"></script>
+<script src="js/pausa.js?v=188dc54f2c6a"></script>
+<!-- TPD-IDiomas -->
+<script src="js/idiomas/catalogo.js?v=2bbe6ff20684"></script>
+<script src="js/idiomas/idiomas.js?v=ddee82f66a1b"></script>
+<script src="js/campo/traducao_jogo.js?v=d4c09931a01f"></script>
+
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>Simulador de operação</title>
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@600;700;800&family=Asap:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="css/campo.css?v=dbda41f9b427">
+</head>
+<body>
+
+<!-- O campo: o simulador de voo roda inteiro aqui dentro, sem alteração. -->
+<iframe id="campo" src="campo/index.html?v=62025a89c272" allow="xr-spatial-tracking; fullscreen; accelerometer; gyroscope" allowfullscreen title="Campo de treinamento"></iframe>
+
+<!-- O controle de verdade: aparece quando o aluno escolhe a vista Controle.
+     É o mesmo site do RC Plus, com as telas do app Agras funcionando. -->
+<div class="aparelho esconder" id="aparelho">
+  <iframe id="controle" src="about:blank" title="Controle RC Plus"></iframe>
+</div>
+
+<!-- ------------------------------------------------------------ carregando -->
+<div class="carregando" id="carregando">
+  <div class="carregando__caixa">
+    <p class="olho">Preparando o campo</p>
+    <h2 id="carregando-titulo">Carregando</h2>
+    <p id="carregando-passo">Montando o terreno, a lavoura e a aeronave…</p>
+    <a id="carregando-voltar" class="esconder" href="conta/drones.html">Voltar à escolha do drone</a>
+  </div>
+</div>
+
+<!-- --------------------------------------------------------- a instrução -->
+<aside class="guia" id="guia" hidden>
+  <header class="guia__topo">
+    <a class="guia__voltar" href="index.html" title="Voltar ao painel">←</a>
+    <div class="guia__titulos">
+      <p class="olho" id="guia-etapa">Etapa</p>
+      <h1 id="guia-titulo">—</h1>
+    </div>
+    <button class="guia__recolher" type="button" id="btn-recolher" title="Recolher">−</button>
+  </header>
+
+  <div class="guia__corpo" id="guia-corpo">
+    <p class="guia__instrucao" id="guia-instrucao"></p>
+
+    <ul class="lista" id="guia-conferir"></ul>
+
+    <details class="guia__porque">
+      <summary>Por que isso importa</summary>
+      <p id="guia-porque"></p>
+    </details>
+  </div>
+
+  <button class="guia__concluir esconder" type="button" id="btn-concluir">
+    Concluir etapa
+  </button>
+</aside>
+
+<!-- -------------------------------------------------------------- boletim -->
+<div class="modal esconder" id="modal">
+  <div class="modal__caixa">
+    <p class="olho">Etapa concluída</p>
+    <h2 id="modal-titulo">Boletim</h2>
+    <div id="modal-corpo"></div>
+    <div class="modal__botoes">
+      <a class="botao-grande" id="btn-proxima" href="#">Próxima etapa</a>
+      <a class="botao-linha" href="index.html">Voltar ao painel</a>
+    </div>
+  </div>
+</div>
+
+<script src="../js/config.js?v=seguranca-20261006"></script>
+<script src="../js/marcas.js?v=480d2bbb1b85"></script>
+<script src="../js/sessao.js?v=7fb3c7a485f1"></script>
+<script src="js/campo/ponte.js?v=e946ff669757"></script>
+<script src="js/campo/estruturas_reais.js?v=6afc772efdc8"></script>
+<script src="js/campo/plantas_reais.js?v=ce82444b1bcc"></script>
+<script src="js/campo/cenario_real.js?v=d7e3e6fcae85"></script>
+<script src="js/campo/etapas.js?v=5f2dbf5a0c8c"></script>
+<script src="js/campo/vinculo.js?v=07c88d99c403"></script>
+<script src="js/campo/vinculo_xag.js?v=c29eb755f871"></script>
+<script src="js/campo/telas_xag.js?v=80b8d1a852cc"></script>
+<script src="js/campo/aparelho_xag.js?v=020ac3d28ee7"></script>
+<script src="js/campo/andamento.js?v=c7a68e963741"></script>
+<script src="js/campo/operacao.js?v=c90005470c02"></script>
+<script src="js/campo/alertas.js?v=2207a719a9f5"></script>
+<script src="js/campo/holofote.js?v=a396a4a627d9"></script>
+<script src="js/campo/camera_p60.js?v=9ce152953e98"></script>
+<script src="js/campo/camera_t10.js?v=6cd9f55f35bf"></script>
+<script src="js/campo/voo_xag.js?v=a2a7100a5278"></script>
+<script src="js/campo/app_rcplus.js?v=c6f32bc0d311"></script>
+<script src="js/campo/controle_real.js?v=5b2f70920f2e"></script>
+<script src="js/campo/celular_xag.js?v=54c5016da88d"></script>
+<script src="js/campo/teclado_rc.js?v=c5e549a72791"></script>
+<script src="js/campo/rc_n1.js?v=612534ba6033"></script>
+<script src="js/campo/rc_plus_cabo.js?v=7bc2fe4ae204"></script>
+<script src="js/campo/cerca_virtual.js?v=2ebee43b5d90"></script>
+<script src="js/campo/manual.js?v=e8477123bf99"></script>
+<script src="js/campo/fisica.js?v=f41e34956001"></script>
+<script src="js/campo/gnss.js?v=13cccc1e968e"></script>
+<script src="js/campo/equipe.js?v=5fdd64e44096"></script>
+<script src="js/campo/radar.js?v=7fae0e769e93"></script>
+<script src="js/campo/ajustes.js?v=d31f7217b56e"></script>
+<script src="js/campo/editor_rota.js?v=cd1ab9e46182"></script>
+<script src="js/campo/meteorologia.js?v=53aa882677b8"></script>
+<script src="js/campo/pulverizacao.js?v=c94d46be831f"></script>
+<script src="js/campo/vortice.js?v=2eaf1f64d9a5"></script>
+<script src="js/campo/controle_xag_3d.js?v=c52ce7f3d245"></script>
+<script src="js/campo/controle_dji_3d.js?v=efbd26bb75d7"></script>
+<script src="js/campo/app_fly.js?v=9a1bdab2e6e7"></script>
+<script src="js/campo/app_guri.js?v=3d77ef1a3008"></script>
+<script src="js/campo/controle_mao_xag_3d.js?v=9132b78eb989"></script>
+<script src="js/campo/modelo_drone.js?v=2a35e67db026"></script>
+
+
+<script src="js/campo/bateria.js?v=045b4f6a6ccc"></script>
+<!-- RETOMADA -->
+<script src="js/campo/retomada_estado.js?v=d13bfd7f0066"></script>
+<script src="js/retomada.js?v=d0cfd708009b"></script>
+<!-- /RETOMADA -->
+<script src="js/campo/principal.js?v=746d0d6c45e0"></script>
+<!-- tela grande e computador fraco: teto de resolucao e qualidade automatica -->
+<script src="js/campo/desempenho.js?v=8c12355e536e"></script>
+<!-- area do aluno: conta as horas quando aberto pelo Iniciar sessao (ver conta/medidor.js) -->
+
+<script src="tutoriais/idiomas-videos.js?v=20261004-en-es-1"></script>
+<script src="js/campo/tutorial_primeiro_voo.js?v=0f2284cae9c8"></script>
+
+<script src="js/campo/vr_controle_original.js?v=8df215383111"></script>
+<script src="js/campo/vr.js?v=0a8cfa032d84"></script>
+<script src="js/campo/falar_auxiliar.js?v=29bd9dd85d04"></script>
+<script src="js/campo/sons_dji.js?v=d5f0fa017e9c"></script>
+</body>
+</html>

@@ -1,0 +1,230 @@
+/* ============================================================
+   Telas tiradas das gravações do RC Plus de verdade
+   ============================================================ */
+
+/* No aparelho a engrenagem abre um painel na direita, da altura da tela,
+   com o mapa aparecendo à esquerda (menu em x=624..744 de 1920). */
+#painel-config{justify-content:flex-end;}
+#painel-config .caixa-config{width:67.5%;height:100%;border-radius:0;}
+
+/* As telas da tela inicial ocupam a tela inteira, com o X no canto. */
+.caixa-extra{width:100%;height:100%;border-radius:0;box-shadow:none;}
+.caixa-extra .rolagem-config{position:relative;}
+
+/* ---------- peças comuns ---------- */
+.aviso-rapido{
+  position:absolute;left:50%;bottom:6%;transform:translateX(-50%);z-index:40;
+  background:#fff;border-radius:.8cqw;box-shadow:0 .4cqw 1.6cqw rgba(0,0,0,.18);
+  padding:1cqw 1.8cqw;display:flex;align-items:center;gap:.8cqw;font-size:1.8cqw;color:#2f3336;white-space:nowrap;
+}
+.aviso-rapido svg{width:2.2cqw;height:2.2cqw;fill:var(--verde);}
+.dialogo-app{z-index:35;background:rgba(0,0,0,.4);}
+.dialogo-app .dialogo{width:40cqw;text-align:center;}
+.dialogo-app h3{font-weight:500;color:#2f3336;line-height:1.4;}
+.marca-ok{width:3.2cqw;height:3.2cqw;margin:0 auto .8cqw;}
+.marca-ok svg{width:100%;height:100%;fill:var(--verde);}
+
+.lista-suspensa{
+  position:absolute;z-index:45;background:#fff;border-radius:.6cqw;box-shadow:0 .6cqw 2cqw rgba(0,0,0,.2);
+  max-height:22cqw;overflow-y:auto;display:flex;flex-direction:column;padding:.4cqw 0;
+}
+.lista-suspensa button{
+  background:transparent;border:0;cursor:pointer;font-family:inherit;text-align:left;
+  font-size:1.75cqw;color:#2f3336;padding:1cqw 1.4cqw;line-height:1.35;
+}
+.lista-suspensa button.ativa{color:var(--verde-texto);}
+.caixa-select.aberta{box-shadow:0 0 0 .16cqw var(--verde);}
+.caixa-select.aberta i{transform:rotate(180deg);}
+
+.marcar{
+  width:2.2cqw;height:2.2cqw;border-radius:.3cqw;border:.16cqw solid #b4b8bb;background:#fff;flex:none;
+  display:inline-grid;place-items:center;cursor:pointer;
+}
+.marcar.marcado{background:var(--verde);border-color:var(--verde);}
+.marcar.marcado:after{content:'';width:.6cqw;height:1.1cqw;border:solid #fff;border-width:0 .28cqw .28cqw 0;transform:translateY(-.1cqw) rotate(45deg);}
+.botao-verde{
+  background:var(--verde);color:#fff;border:0;border-radius:.6cqw;cursor:pointer;font-family:inherit;
+  font-size:1.85cqw;padding:.8cqw 1.8cqw;white-space:nowrap;
+}
+.botao-verde.apagado,.botao-excluir.apagado{opacity:.4;cursor:default;}
+.botao-excluir{
+  background:#fff;color:#e8442e;border:.14cqw solid #e8442e;border-radius:.6cqw;cursor:pointer;font-family:inherit;
+  font-size:1.85cqw;padding:.7cqw 1.6cqw;
+}
+
+/* ---------- engrenagem: tabela dos motores, peso, RTK ---------- */
+.tabela-config .linha:not(.cabecalho){display:grid;grid-template-columns:1fr 1fr 1fr;padding:1cqw 1.2cqw;}
+.tabela-config .linha:not(.cabecalho) span{font-size:1.8cqw;color:#2f3336;}
+.campo-lapis{
+  width:22cqw;height:3.6cqw;background:#ececeb;border-radius:.5cqw;display:flex;justify-content:flex-end;
+  align-items:center;padding:0 1cqw;
+}
+.campo-lapis svg{width:1.9cqw;height:1.9cqw;fill:#8b8f93;}
+
+.rtk-desligado .rtk-corpo{display:none;}
+.fonte-rede .so-drtk,.fonte-drtk .so-rede{display:none;}
+.aviso-drtk{
+  display:flex;gap:1cqw;background:#fdf3e4;border-radius:.6cqw;padding:1.2cqw;margin-top:1cqw;
+}
+.aviso-drtk b{
+  width:2.2cqw;height:2.2cqw;border-radius:50%;background:#f08a24;color:#fff;flex:none;
+  display:grid;place-items:center;font-size:1.5cqw;
+}
+.aviso-drtk p{margin:0;font-size:1.75cqw;color:#2f3336;line-height:1.5;}
+.coordenadas-rtk{background:#ececeb;border-radius:.6cqw;padding:1.2cqw;margin-bottom:1.2cqw;}
+.coordenadas-rtk .topo{display:flex;justify-content:space-between;align-items:center;font-size:1.9cqw;color:#2f3336;}
+.coordenadas-rtk .nome{margin:.6cqw 0;font-size:1.7cqw;color:#8b8f93;}
+.coordenadas-rtk .valores{display:grid;grid-template-columns:repeat(3,1fr);}
+.coordenadas-rtk .valores div{display:flex;flex-direction:column;gap:.2cqw;}
+.coordenadas-rtk .valores b{font-size:2cqw;color:#2f3336;font-weight:500;}
+.coordenadas-rtk .valores span{font-size:1.5cqw;color:#8b8f93;}
+
+/* ---------- calibração do controle ---------- */
+.calibracao-cr .dialogo{width:58cqw;}
+.cal-cartoes{display:flex;gap:1.4cqw;margin-bottom:.4cqw;}
+.cal-pino,.cal-roda{flex:1;background:#ececeb;border-radius:.6cqw;padding:1cqw;position:relative;}
+.cal-pino{height:22cqw;}
+.cal-pino p,.cal-roda p{margin:0;text-align:left;font-size:1.6cqw;color:#2f3336;}
+.cal-pino .c{position:absolute;font-size:1.5cqw;color:#5b5f63;}
+.cal-pino .cima{left:50%;top:3.2cqw;transform:translateX(-50%);}
+.cal-pino .baixo{left:50%;bottom:.8cqw;transform:translateX(-50%);}
+.cal-pino .esquerda{left:1.2cqw;top:50%;}
+.cal-pino .direita{right:1.2cqw;top:50%;}
+.cal-cruz{
+  position:absolute;left:22%;right:22%;top:5.6cqw;bottom:3cqw;cursor:grab;touch-action:none;
+  background:linear-gradient(#cfd2d4,#cfd2d4) center/.2cqw 100% no-repeat,
+             linear-gradient(#cfd2d4,#cfd2d4) center/100% .2cqw no-repeat;
+}
+.cal-cruz .ponto{
+  position:absolute;left:calc(50% - 1cqw);top:calc(50% - 1cqw);width:2cqw;height:2cqw;border-radius:50%;
+  background:var(--verde);box-shadow:0 0 0 .4cqw rgba(58,181,74,.25);
+}
+.barra-roda{display:flex;align-items:center;gap:.8cqw;margin:1cqw 0;font-size:1.5cqw;color:#5b5f63;}
+.barra-roda .trilho{flex:1;height:.6cqw;background:#d4d6d8;border-radius:.3cqw;position:relative;cursor:ew-resize;touch-action:none;}
+.barra-roda .trilho i{position:absolute;top:0;bottom:0;background:var(--verde);border-radius:.3cqw;width:0;}
+.barra-roda .neg{right:50%;}
+.barra-roda .pos{left:50%;}
+.figura-roda{width:100%;height:9cqw;}
+
+/* ---------- perfil > registros de voo ---------- */
+.topo-voos{display:flex;justify-content:space-between;align-items:center;padding:.6cqw 0 1.2cqw;}
+.tabela-voos{display:flex;flex-direction:column;gap:.8cqw;}
+.tabela-voos .linha{
+  display:grid;grid-template-columns:1.3fr 1fr 1fr .9fr 1fr;align-items:end;gap:1cqw;position:relative;
+  background:#fff;border-radius:.6cqw;padding:1.2cqw 1.4cqw;font-size:1.75cqw;color:#2f3336;
+}
+.tabela-voos .linha.cabecalho{background:transparent;padding-top:0;padding-bottom:0;color:#5b5f63;font-size:1.6cqw;}
+.tabela-voos .linha span b{display:block;font-weight:400;margin-bottom:.5cqw;}
+.tabela-voos .linha span i{font-style:normal;}
+.tabela-voos .linha .nuvem{position:absolute;right:1cqw;top:.8cqw;width:2cqw;height:2cqw;}
+
+/* ---------- pastinha ---------- */
+.item-arquivo{cursor:default;border:.14cqw solid transparent;}
+.item-arquivo[data-item]{cursor:pointer;}
+.item-arquivo.marcado{background:#e4f1e8;border-color:var(--verde);}
+.item-arquivo.sd{background:#fff;}
+.item-arquivo.sd.marcado{background:#e4f1e8;}
+.aviso-sd{padding:.2cqw 0 1cqw;}
+.aviso-sd p{margin:0 0 .4cqw;display:flex;gap:.6cqw;font-size:1.55cqw;color:#5b5f63;line-height:1.4;}
+.aviso-sd i{
+  width:1.7cqw;height:1.7cqw;border-radius:50%;background:#5b5f63;color:#fff;flex:none;font-style:normal;
+  display:grid;place-items:center;font-size:1.1cqw;margin-top:.1cqw;
+}
+.rodape-selecao{
+  position:sticky;bottom:-1.6cqw;margin:1cqw -2cqw -1.6cqw;padding:1.2cqw 2cqw;background:#fff;
+  display:flex;align-items:center;gap:1.6cqw;border-top:.12cqw solid #ececeb;z-index:2;
+}
+.marcas-rodape{display:flex;flex-direction:column;gap:.6cqw;}
+.marcar-linha{display:flex;align-items:center;gap:.8cqw;font-size:1.75cqw;color:#2f3336;cursor:pointer;}
+.rodape-selecao .desmarcar{
+  background:transparent;border:0;cursor:pointer;font-family:inherit;font-size:1.75cqw;color:#2f3336;
+  margin-left:auto;margin-right:auto;
+}
+.rodape-selecao .contagem{font-size:1.75cqw;color:var(--verde-texto);margin-left:auto;}
+
+/* ---------- gerenciamento de registros ---------- */
+.extra-registros .rolagem-config{background:#f0f0ef;}
+.topo-registros{display:flex;gap:1cqw;padding:1.2cqw 0;}
+.topo-registros .chip{
+  background:#fff;border:0;border-radius:.6cqw;cursor:pointer;font-family:inherit;font-size:1.75cqw;color:#2f3336;
+  padding:.9cqw 1.4cqw;display:flex;align-items:center;gap:.6cqw;
+}
+.topo-registros .chip.direita{margin-left:auto;background:transparent;}
+.topo-registros .chip i{font-style:normal;font-size:2.2cqw;color:#5b5f63;}
+.grade-registros{display:grid;grid-template-columns:1fr 1fr;gap:1.2cqw;}
+.cartao-registro{
+  background:#fff;border:0;border-radius:.8cqw;cursor:pointer;font-family:inherit;text-align:left;
+  padding:1.6cqw;min-height:13cqw;display:flex;flex-direction:column;gap:.8cqw;position:relative;overflow:hidden;
+}
+.cartao-registro:nth-child(n+3){min-height:7cqw;}
+.cartao-registro b{font-size:2.1cqw;color:#2f3336;font-weight:600;}
+.cartao-registro span{font-size:1.6cqw;color:#5b5f63;line-height:1.45;max-width:85%;}
+.cartao-registro svg{position:absolute;right:1.6cqw;bottom:1cqw;width:6cqw;height:6cqw;fill:#eeeeed;}
+.cartao-registro.apagado{cursor:default;}
+.cartao-registro.apagado b,.cartao-registro.apagado span{color:#c4c8ca;}
+.dica-registros{margin:1.4cqw 0 0;text-align:center;font-size:1.5cqw;color:#8b8f93;}
+.lista-registros{display:flex;flex-direction:column;position:relative;min-height:20cqw;}
+.lista-registros .registro{
+  display:flex;align-items:center;gap:1.2cqw;padding:1.3cqw .6cqw;border-bottom:.12cqw solid #e6e6e5;
+  font-size:1.85cqw;color:#2f3336;cursor:pointer;
+}
+.lista-registros.carregando .registro{display:none;}
+.lista-registros .girando{display:none;}
+.lista-registros.carregando .girando{
+  display:block;position:absolute;left:50%;top:6cqw;width:3cqw;height:3cqw;border-radius:50%;
+  border:.3cqw solid var(--verde);border-right-color:transparent;animation:girar-registro .8s linear infinite;
+}
+@keyframes girar-registro{to{transform:rotate(360deg);}}
+
+/* ---------- firmware ---------- */
+.extra-dispositivo.em-sub .rolagem-config{background:#f0f0ef;}
+.lista-firmware{display:grid;grid-template-columns:repeat(4,1fr);gap:1.2cqw;padding-top:1cqw;}
+.cartao-firmware{
+  background:#fff;border-radius:.8cqw;padding:1.2cqw;display:flex;flex-direction:column;gap:1cqw;min-height:14cqw;
+}
+.cartao-firmware .nome{font-size:1.9cqw;color:#2f3336;text-align:center;}
+.cartao-firmware.apagado .nome{color:#c4c8ca;}
+.cartao-firmware.apagado .marcar{opacity:.4;cursor:default;}
+.versao-firmware{
+  margin-top:auto;background:#f0f0ef;border:0;border-radius:.6cqw;cursor:pointer;font-family:inherit;
+  display:flex;align-items:center;justify-content:space-between;padding:.8cqw 1cqw;text-align:left;
+}
+.versao-firmware span{display:flex;flex-direction:column;font-size:1.45cqw;color:#8b8f93;}
+.versao-firmware b{font-size:1.7cqw;color:#2f3336;font-weight:400;}
+.versao-firmware i{font-style:normal;font-size:2.4cqw;color:#5b5f63;}
+.fundo-firmware{position:absolute;inset:0;background:rgba(0,0,0,.4);z-index:5;display:flex;justify-content:flex-end;}
+.painel-firmware{width:67.5%;height:100%;background:#fff;padding:1.4cqw 2cqw;overflow-y:auto;}
+.painel-firmware .topo{display:flex;align-items:center;justify-content:center;position:relative;margin-bottom:1.2cqw;}
+.painel-firmware h2{margin:0;font-size:2.2cqw;font-weight:500;color:#2f3336;}
+.painel-firmware .topo .botao-verde{position:absolute;right:0;padding:.5cqw 1.2cqw;}
+.tipo-versao{margin:1cqw 0 .6cqw;font-size:1.6cqw;color:#8b8f93;}
+.painel-firmware .versao{
+  display:flex;align-items:flex-start;gap:1cqw;border:.14cqw solid #e6e6e5;border-radius:.8cqw;padding:1.2cqw;
+}
+.painel-firmware .versao.atual{background:#e4f1e8;border-color:var(--verde);border-bottom-left-radius:0;border-bottom-right-radius:0;}
+.painel-firmware .versao .bolha{width:2cqw;height:2cqw;border-radius:50%;border:.26cqw solid #c4c8ca;flex:none;margin-top:.2cqw;}
+.painel-firmware .versao.atual .bolha{border:.6cqw solid var(--verde);}
+.painel-firmware .versao div{flex:1;display:flex;flex-direction:column;gap:.3cqw;}
+.painel-firmware .versao b{font-size:1.9cqw;color:#2f3336;font-weight:500;}
+.painel-firmware .versao.atual b{color:var(--verde-texto);}
+.painel-firmware .versao em{font-style:normal;font-size:1.4cqw;color:var(--verde-texto);background:#cdebd6;border-radius:.4cqw;padding:.1cqw .6cqw;margin-left:.6cqw;}
+.painel-firmware .versao span{font-size:1.6cqw;color:#5b5f63;}
+.painel-firmware .versao i{font-style:normal;font-size:1.6cqw;color:#5b5f63;}
+.notas-versao{
+  background:#e4f1e8;border:.14cqw solid var(--verde);border-top:0;border-radius:0 0 .8cqw .8cqw;
+  padding:1cqw 1.4cqw 1.4cqw;font-size:1.5cqw;color:#5b5f63;line-height:1.5;margin-bottom:.6cqw;
+}
+
+/* rodapé da seleção sempre embaixo, como no aparelho */
+.extra-arquivos .rolagem-config,.extra-dispositivo.em-sub .rolagem-config{display:flex;flex-direction:column;}
+.extra-arquivos .lista-arquivos{flex:none;}
+.extra-arquivos .lista-arquivos:has(.vazio-central){flex:1;}
+.rodape-selecao{margin-top:auto;}
+
+/* baixando da nuvem */
+.icone-baixar{display:flex;justify-content:center;margin-bottom:.6cqw;}
+.icone-baixar .nuvem{width:3.2cqw;height:3.2cqw;}
+.progresso-baixar{height:.5cqw;background:#e6e6e5;border-radius:.3cqw;margin:1.6cqw 1cqw .6cqw;overflow:hidden;}
+.progresso-baixar i{display:block;height:100%;width:0;background:var(--verde);transition:width .15s;}
+.dialogo-baixar .porcento{margin:0 1cqw;text-align:left;font-size:1.6cqw;color:var(--verde-texto);}
+.dialogo-baixar h3{font-size:1.9cqw;}

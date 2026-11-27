@@ -1,0 +1,326 @@
+/* ==========================================================================
+   A camada de treinamento por cima do campo
+
+   Regra: o campo manda. A guia do instrutor e uma faixa estreita no canto,
+   que da para recolher - ela nunca pode disputar espaco com o HUD do
+   simulador nem tapar a aeronave.
+   ========================================================================== */
+
+:root {
+  --vidro:       rgba(9, 16, 22, .92);
+  --borda:       rgba(255, 255, 255, .14);
+  --texto:       #EAF1EC;
+  --texto-fraco: #9FB3B9;
+  --ambar:       #E8901A;
+  --verde:       #6FC23C;
+  --vermelho:    #E2593F;
+
+  --display: "Outfit", "Segoe UI", system-ui, sans-serif;
+  --corpo:   "Asap", "Segoe UI", system-ui, sans-serif;
+
+  color-scheme: dark;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  background: #0A1219;
+  color: var(--texto);
+  font-family: var(--corpo);
+  font-size: 15px;
+}
+
+#campo {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  display: block;
+}
+
+h1, h2, h3 { font-family: var(--display); margin: 0; line-height: 1.2; }
+
+.olho {
+  font-family: var(--display);
+  font-size: .68rem;
+  font-weight: 700;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--ambar);
+  margin: 0 0 2px;
+}
+
+.esconder { display: none !important; }
+#guia[hidden], body.modo-livre #guia { display: none !important; }
+
+/* ---------------------------------------------------------------- guia */
+
+.guia {
+  position: fixed;
+  right: 14px;                  /* o painel do campo usa a esquerda */
+  top: 74px;                    /* abaixo do HUD do campo */
+  width: min(30vw, 330px);
+  max-height: calc(100vh - 150px);
+  background: var(--vidro);
+  border: 1px solid var(--borda);
+  border-radius: 14px;
+  backdrop-filter: blur(10px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, .5);
+  z-index: 20;
+}
+
+.guia--pronta { border-color: rgba(111, 194, 60, .55); }
+
+.guia__topo {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--borda);
+}
+
+.guia__titulos { min-width: 0; }
+.guia__topo h1 { font-size: 1.05rem; }
+
+.guia__voltar, .guia__recolher {
+  flex: none;
+  width: 28px; height: 28px;
+  border: 1px solid var(--borda);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--texto-fraco);
+  font-size: .95rem;
+  line-height: 1;
+  display: grid;
+  place-items: center;
+  text-decoration: none;
+  cursor: pointer;
+}
+.guia__voltar:hover, .guia__recolher:hover { color: var(--texto); background: rgba(255,255,255,.08); }
+.guia__recolher { margin-left: auto; }
+
+.guia__corpo {
+  padding: 12px 14px;
+  overflow-y: auto;
+}
+
+.guia--recolhida .guia__corpo,
+.guia--recolhida .guia__concluir { display: none; }
+
+.guia__instrucao {
+  margin: 0 0 12px;
+  line-height: 1.5;
+  color: var(--texto);
+}
+
+/* ------------------------------------------------------- o que falta */
+
+.lista { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+
+.lista__item {
+  position: relative;
+  padding-left: 26px;
+  font-size: .92rem;
+  line-height: 1.4;
+  color: var(--texto-fraco);
+}
+.lista__item::before {
+  content: "";
+  position: absolute;
+  left: 2px;
+  top: .25em;
+  width: 15px; height: 15px;
+  border: 1.5px solid var(--borda);
+  border-radius: 5px;
+}
+.lista__item--feito { color: var(--texto); }
+.lista__item--feito::before {
+  content: "✓";
+  border-color: var(--verde);
+  background: rgba(111, 194, 60, .18);
+  color: var(--verde);
+  font-size: .75rem;
+  line-height: 13px;
+  text-align: center;
+  font-weight: 700;
+}
+
+/* ------------------------------------------------------------ por que */
+
+.guia__porque {
+  margin-top: 14px;
+  border-top: 1px solid var(--borda);
+  padding-top: 10px;
+}
+.guia__porque summary {
+  cursor: pointer;
+  font-family: var(--display);
+  font-size: .8rem;
+  color: var(--texto-fraco);
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+.guia__porque p {
+  margin: 8px 0 0;
+  font-size: .9rem;
+  line-height: 1.5;
+  color: var(--texto-fraco);
+}
+
+/* ----------------------------------------------------------- concluir */
+
+.guia__concluir {
+  margin: 0 14px 14px;
+  padding: 12px;
+  border: none;
+  border-radius: 999px;
+  background: var(--verde);
+  color: #0B1A06;
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 1rem;
+  cursor: pointer;
+}
+.guia__concluir:hover { filter: brightness(1.07); }
+
+/* --------------------------------------------------------- carregando */
+
+.carregando {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: #0A1219;
+  z-index: 60;
+}
+.carregando__caixa { text-align: center; max-width: 420px; padding: 24px; }
+.carregando h2 { font-size: 1.5rem; margin-bottom: 8px; }
+.carregando p { color: var(--texto-fraco); margin: 0; }
+
+/* -------------------------------------------------------------- modal */
+
+.modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(5, 10, 14, .8);
+  display: grid;
+  place-items: center;
+  z-index: 70;
+  padding: 20px;
+}
+
+.modal__caixa {
+  width: min(560px, 100%);
+  max-height: 86vh;
+  overflow-y: auto;
+  background: rgba(15, 26, 34, .96);
+  border: 1px solid var(--borda);
+  border-radius: 16px;
+  padding: 26px;
+}
+.modal__caixa h2 { font-size: 1.5rem; margin-bottom: 14px; }
+.modal__botoes { display: grid; gap: 10px; margin-top: 18px; }
+
+.item {
+  border: 1px solid var(--borda);
+  border-left: 3px solid var(--texto-fraco);
+  border-radius: 0 10px 10px 0;
+  padding: 11px 14px;
+  margin-bottom: 10px;
+}
+.item--bom  { border-left-color: var(--verde); }
+.item--ruim { border-left-color: var(--vermelho); }
+.item h3 { font-size: .95rem; }
+.item b { display: block; font-family: var(--display); font-size: 1.1rem; margin: 2px 0 4px; }
+.item p { margin: 0; font-size: .88rem; color: var(--texto-fraco); line-height: 1.5; }
+
+.nota {
+  font-family: var(--display);
+  font-size: 2.6rem;
+  font-weight: 800;
+  color: var(--ambar);
+  margin: 0 0 10px;
+}
+
+.botao-grande {
+  display: block;
+  text-align: center;
+  padding: 13px;
+  border: none;
+  border-radius: 999px;
+  background: var(--verde);
+  color: #0B1A06;
+  font-family: var(--display);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.botao-linha {
+  display: block;
+  text-align: center;
+  padding: 12px;
+  border: 1px solid var(--borda);
+  border-radius: 999px;
+  color: var(--texto);
+  text-decoration: none;
+  font-family: var(--display);
+  font-weight: 600;
+}
+
+/* --------------------------------------------------------- telas menores */
+
+@media (max-width: 900px) {
+  .guia { width: auto; left: 14px; right: 14px; max-height: 38vh; }
+}
+
+
+/* ==========================================================================
+   A TELA DO APARELHO
+
+   O campo ja desenha o controle na mao do operador, com a cena atras. O
+   que entra aqui e so o CONTEUDO da tela: o app de verdade, encaixado no
+   retangulo que o campo reserva (rcCaixa.sx/sy/sw/sh, recalculado a cada
+   resize). Por isso este bloco nao tem tamanho proprio - quem posiciona
+   e o principal.js.
+   ========================================================================== */
+
+.aparelho {
+  position: fixed;
+  z-index: 30;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.aparelho iframe {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  display: block;
+  background: transparent;
+  pointer-events: auto;      /* a tela recebe os toques; a moldura, não */
+}
+
+.aparelho__voltar {
+  position: fixed;
+  left: 14px;
+  bottom: 60px;
+  z-index: 31;
+  padding: 9px 15px;
+  border: 1px solid var(--borda);
+  border-radius: 999px;
+  background: var(--vidro);
+  color: var(--texto);
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: .9rem;
+  cursor: pointer;
+  backdrop-filter: blur(8px);
+}
+.aparelho__voltar:hover { background: rgba(255, 255, 255, .12); }

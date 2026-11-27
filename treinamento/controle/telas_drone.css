@@ -1,0 +1,259 @@
+/* ============================================================
+   Telas com o drone conectado (gravação "drone conectado")
+   ============================================================ */
+
+/* ---------- Selecione o modo da tarefa ---------- */
+.tela-modos{background:#fff;padding:1.6cqw 2.4cqw;}
+.tela-modos h2{font-size:2.1cqw;font-weight:600;color:#2f3336;margin:0 0 1.2cqw;}
+.fechar-modos{
+  position:absolute;right:2cqw;top:1.2cqw;background:transparent;border:0;cursor:pointer;
+  font-size:2.4cqw;color:#8b8f93;
+}
+.grade-modos-app{
+  display:grid;grid-template-columns:1fr 1fr 1fr;grid-template-rows:auto 24cqw 17cqw;
+  column-gap:1.2cqw;row-gap:.8cqw;align-content:start;
+}
+.grupo-modos{margin:0;font-size:1.6cqw;font-weight:600;color:#2f3336;}
+.grupo-modos.agricultura{grid-column:1 / 3;}
+.grupo-modos.mapeamento{grid-column:3;}
+.cartao-modo{
+  border:0;border-radius:.6cqw;cursor:pointer;font-family:inherit;text-align:left;position:relative;overflow:hidden;
+  padding:1.2cqw 1.4cqw;color:#fff;display:flex;align-items:flex-start;
+  background:linear-gradient(160deg,#4a4d50,#232527);
+}
+.cartao-modo b{font-size:2.1cqw;font-weight:600;position:relative;z-index:1;}
+.cartao-modo:before{content:'';position:absolute;inset:0;opacity:.35;
+  background:repeating-linear-gradient(115deg,transparent 0 2.2cqw,rgba(255,255,255,.18) 2.2cqw 2.35cqw);}
+.cartao-modo.ativo{background:linear-gradient(160deg,#3fae4c,#1d7a33);}
+.m-maprota.ativo,.m-maparvore.ativo{background:linear-gradient(170deg,#56b9c8,#3c9a4a 60%,#2a7a2e);}
+.m-rota{grid-column:1 / 3;grid-row:2;}
+.m-manual{grid-column:1;grid-row:3;}
+.m-arvore{grid-column:2;grid-row:3;}
+.m-maprota{grid-column:3;grid-row:2;}
+.m-maparvore{grid-column:3;grid-row:3;}
+.icone-modo{position:absolute;right:1.2cqw;bottom:1cqw;width:3cqw;height:3cqw;color:#fff;font-style:normal;z-index:1;}
+.icone-modo svg{width:100%;height:100%;}
+.icone-modo.letra{font-size:3cqw;font-weight:700;line-height:1;text-align:center;}
+
+/* o que cada modo mostra na tela do mapa */
+body.app-modo-manual [data-tela="mapa"] .acoes-direita,
+body.app-modo-manual [data-tela="mapa"] .acoes-inferiores,
+body.app-modo-manual [data-tela="mapa"] .aba-lista,
+body.app-modo-arvore [data-tela="mapa"] .aba-lista,
+body.app-modo-maparvore [data-tela="mapa"] .aba-lista{display:none;}
+.painel-manual,.botao-rota-fixa,.botao-iniciar-manual,.lista-arvores{display:none;}
+body.app-modo-manual .painel-manual,body.app-modo-manual .botao-rota-fixa,body.app-modo-manual .botao-iniciar-manual{display:flex;}
+body.app-modo-arvore .lista-arvores,body.app-modo-maparvore .lista-arvores{display:flex;}
+body.app-modo-arvore [data-tela="mapa"] .botao-selecao,body.app-modo-maparvore [data-tela="mapa"] .botao-selecao{display:none;}
+
+.painel-manual{
+  position:absolute;left:1cqw;top:6.4cqw;bottom:1cqw;width:23.5cqw;z-index:4;
+  background:#f4f4f3;border-radius:1cqw;padding:1cqw 1.2cqw;flex-direction:column;overflow-y:auto;
+}
+.abas-mm{display:flex;border-bottom:.14cqw solid #e2e2e1;margin-bottom:1cqw;}
+.abas-mm button{
+  flex:1;background:transparent;border:0;cursor:pointer;font-family:inherit;font-size:1.9cqw;color:#5b5f63;
+  padding:.6cqw 0;
+}
+.abas-mm button.ativa{color:var(--verde-texto);font-weight:600;background:#fff;border-radius:.6cqw .6cqw 0 0;}
+.painel-manual .abas-exec{margin-bottom:1cqw;}
+.painel-manual .abas-exec button{flex:1;}
+.conteudo-man{display:none;}
+.conteudo-man.ativa{display:block;}
+.painel-manual .so-mmais{display:none;}
+.painel-manual.mmais .so-mmais{display:block;}
+.painel-manual.mmais .so-m{display:none;}
+.segmentado-cenario{display:flex;flex-direction:column;border:.14cqw solid #dededd;border-radius:.6cqw;overflow:hidden;margin-bottom:1cqw;}
+.segmentado-cenario button{
+  background:#fff;border:0;border-bottom:.12cqw solid #e6e6e5;cursor:pointer;font-family:inherit;
+  font-size:1.7cqw;color:#5b5f63;padding:.7cqw;
+}
+.segmentado-cenario button.ativa{background:#e4f1e8;color:var(--verde-texto);font-weight:600;}
+.botao-rota-fixa{position:absolute;right:1.4cqw;top:23cqw;}
+.botao-rota-fixa svg,.botao-iniciar-manual svg{width:2cqw;height:2cqw;fill:#3a3e41;color:#3a3e41;}
+.botao-iniciar-manual{position:absolute;right:1.4cqw;bottom:2.2cqw;}
+.aviso-centro{
+  position:absolute;left:50%;bottom:14%;transform:translateX(-50%);z-index:30;max-width:36cqw;
+  background:#fff;border-radius:.8cqw;padding:1.2cqw 1.8cqw;text-align:center;font-size:1.8cqw;color:#2f3336;
+  box-shadow:0 .4cqw 1.6cqw rgba(0,0,0,.25);
+}
+
+.lista-arvores{
+  position:absolute;left:0;top:6cqw;bottom:0;width:21cqw;z-index:4;background:#f4f4f3;
+  flex-direction:column;padding:1cqw;
+}
+.lista-arvores h3{margin:0 0 1cqw;text-align:center;font-size:1.9cqw;font-weight:600;color:#2f3336;}
+.filtros-arvores{display:flex;gap:.8cqw;}
+.filtros-arvores .busca{width:5cqw;height:3.6cqw;background:#e6e6e5;border-radius:.5cqw;display:grid;place-items:center;}
+.filtros-arvores .busca svg{width:1.8cqw;height:1.8cqw;fill:#8b8f93;}
+.filtros-arvores button{
+  flex:1;background:#fff;border:0;border-radius:.5cqw;font-family:inherit;font-size:1.7cqw;color:#2f3336;
+  display:flex;align-items:center;justify-content:center;gap:.5cqw;
+}
+.filtros-arvores button svg{width:1.7cqw;height:1.7cqw;fill:#5b5f63;}
+.vazio-arvores{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.8cqw;}
+.vazio-arvores svg{width:6cqw;height:6cqw;}
+.vazio-arvores p{margin:0;font-size:1.7cqw;color:#5b5f63;text-align:center;}
+
+/* ---------- mapeamento de rota ---------- */
+.painel-tarefa-map,.caixa-mapeamento{display:none;}
+body.app-modo-maprota [data-tela="mapeamento"] .painel-rota,
+body.app-modo-maprota [data-tela="mapeamento"] .caixa-areas:not(.caixa-mapeamento),
+body.app-modo-maprota [data-tela="mapeamento"] .lista-tipos button:not([data-tipo="Ponto limite"]){display:none;}
+body.app-modo-maprota .painel-tarefa-map{display:flex;}
+body.app-modo-maprota .caixa-mapeamento{display:block;}
+.caixa-mapeamento{width:26cqw;}
+.painel-tarefa-map{
+  position:absolute;left:1cqw;top:6.4cqw;max-height:calc(100% - 7.4cqw);width:23.5cqw;z-index:4;
+  background:#f4f4f3;border-radius:1cqw;padding:1.3cqw 1.4cqw;flex-direction:column;overflow-y:auto;
+}
+.painel-tarefa-map h2{margin:0 0 1cqw;text-align:center;font-size:1.8cqw;font-weight:600;color:#2f3336;}
+.cartao-rota-map{
+  background:#fff;border:.16cqw solid #e2e2e1;border-radius:.7cqw;cursor:pointer;font-family:inherit;text-align:left;
+  display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:.4cqw .8cqw;padding:.9cqw 1cqw;margin-bottom:.8cqw;
+}
+.cartao-rota-map b{font-size:1.85cqw;font-weight:500;color:#2f3336;}
+.cartao-rota-map .ic{width:2cqw;height:2cqw;color:#8b8f93;}
+.cartao-rota-map .ic svg{width:100%;height:100%;}
+.cartao-rota-map .desc{grid-column:1 / 4;font-size:1.5cqw;color:#5b5f63;line-height:1.4;}
+.cartao-rota-map .bolha{width:1.8cqw;height:1.8cqw;border-radius:50%;border:.24cqw solid #b4b8bb;}
+.cartao-rota-map.ativa{background:#e4f1e8;border-color:var(--verde);}
+.cartao-rota-map.ativa b{color:var(--verde-texto);}
+.cartao-rota-map.ativa .bolha{border:.55cqw solid var(--verde);}
+.desc-resolucao{margin:.6cqw 0 0;font-size:1.5cqw;color:#5b5f63;line-height:1.4;}
+
+/* ---------- painéis flutuantes do mapa ---------- */
+.flutuante-mapa{z-index:25;}
+.painel-prescricao{
+  position:absolute;left:1cqw;top:6.4cqw;bottom:1cqw;width:21cqw;background:#fff;border-radius:.8cqw;
+  display:flex;flex-direction:column;padding:1cqw 1cqw 0;box-shadow:0 .4cqw 1.6cqw rgba(0,0,0,.2);
+}
+.painel-prescricao h3{margin:0 0 .8cqw;text-align:left;font-size:1.7cqw;font-weight:600;color:#2f3336;}
+.abas-prescricao{display:flex;justify-content:space-around;border-bottom:.12cqw solid #ececeb;}
+.abas-prescricao button{
+  background:transparent;border:0;cursor:pointer;font-family:inherit;font-size:1.8cqw;color:#5b5f63;padding:.4cqw 1cqw .6cqw;
+}
+.abas-prescricao button.ativa{color:var(--verde-texto);font-weight:600;border-bottom:.26cqw solid var(--verde);}
+.corpo-prescricao{flex:1;display:flex;align-items:center;justify-content:center;position:relative;}
+.vazio-prescricao{display:flex;flex-direction:column;align-items:center;gap:.8cqw;padding:0 .6cqw;}
+.vazio-prescricao svg{width:5.4cqw;height:5.4cqw;}
+.vazio-prescricao p{margin:0;text-align:center;font-size:1.5cqw;color:#5b5f63;line-height:1.45;}
+.girando-p{
+  width:3cqw;height:3cqw;border-radius:50%;border:.3cqw solid var(--verde);border-right-color:transparent;
+  animation:girar-p .8s linear infinite;
+}
+@keyframes girar-p{to{transform:rotate(360deg);}}
+.painel-prescricao .botoes-dialogo{margin:0 -1cqw;}
+
+.painel-tipo-mapa{
+  position:absolute;right:1cqw;width:33cqw;max-height:66%;overflow-y:auto;background:#fff;border-radius:.8cqw;
+  padding:1.2cqw 1.4cqw;box-shadow:0 .4cqw 1.6cqw rgba(0,0,0,.22);
+}
+.linha-tipo{display:flex;align-items:center;justify-content:space-between;gap:1cqw;padding:.9cqw 0;}
+.linha-tipo>span{font-size:1.75cqw;color:#2f3336;line-height:1.3;}
+.minis{display:flex;gap:1cqw;}
+.mini-mapa{
+  background:transparent;border:0;cursor:pointer;font-family:inherit;display:flex;flex-direction:column;align-items:center;gap:.3cqw;
+  font-size:1.5cqw;color:#5b5f63;padding:0;
+}
+.mini-mapa svg{width:9cqw;height:5.6cqw;border-radius:.4cqw;border:.2cqw solid transparent;display:block;}
+.mini-mapa.ativa svg{border-color:var(--verde);}
+.mini-mapa.ativa span{color:var(--verde-texto);font-weight:600;}
+
+.link-hd{background:transparent;border:0;cursor:pointer;font-family:inherit;font-size:1.6cqw;color:var(--verde-texto);display:flex;align-items:center;gap:.4cqw;}
+.link-hd svg{width:1.6cqw;height:1.6cqw;fill:var(--verde-texto);}
+.painel-tipo-mapa .interruptor{width:4.6cqw;height:2.6cqw;}
+.painel-tipo-mapa .interruptor i{width:2.2cqw;height:2.2cqw;}
+.painel-tipo-mapa .interruptor.ligado i{left:2.2cqw;}
+.titulo-auxilios{margin:.6cqw 0;font-size:1.75cqw;color:#2f3336;}
+.auxilios{display:flex;gap:1cqw;}
+.aux{flex:1;background:transparent;border:0;cursor:pointer;font-family:inherit;display:flex;flex-direction:column;align-items:center;gap:.3cqw;font-size:1.5cqw;color:#5b5f63;}
+.aux.ativa span{color:var(--verde-texto);}
+.fig-aux{
+  width:100%;height:5cqw;border-radius:.4cqw;border:.2cqw solid transparent;display:block;position:relative;
+  background:linear-gradient(#a9c7d8 0 45%,#7f9a55 45%);
+}
+.aux.ativa .fig-aux{border-color:var(--verde);}
+.fig-aux.horizonte:after{content:'';position:absolute;left:10%;right:10%;top:50%;border-top:.2cqw dashed #fff;}
+.fig-aux.orientacao:after{content:'';position:absolute;left:50%;top:20%;bottom:10%;border-left:.3cqw solid #fff;}
+.fig-aux.grade:after{content:'';position:absolute;inset:0;
+  background:linear-gradient(90deg,transparent 32%,rgba(255,255,255,.7) 33% 34%,transparent 35% 65%,rgba(255,255,255,.7) 66% 67%,transparent 68%),
+             linear-gradient(transparent 32%,rgba(255,255,255,.7) 33% 34%,transparent 35% 65%,rgba(255,255,255,.7) 66% 67%,transparent 68%);}
+.radios-hd{display:flex;flex-direction:column;text-align:left;}
+.radios-hd .linha-radio{font-size:1.75cqw;padding:1cqw .4cqw;}
+
+/* "Padrão": o terreno do jogo em tons de mapa, não a foto */
+.veu-padrao{position:absolute;inset:0;pointer-events:none;display:none;background:rgba(222,238,214,.58);}
+body.mapa-padrao .veu-padrao{display:block;}
+
+/* ---------- janelinhas da barra de estado ---------- */
+.janelinha{
+  position:absolute;transform:translateX(-50%);width:28cqw;background:#fff;border-radius:.8cqw;
+  padding:1cqw 1.2cqw 1.2cqw;box-shadow:0 .4cqw 1.6cqw rgba(0,0,0,.25);
+}
+.janelinha:before{
+  content:'';position:absolute;left:50%;top:-.9cqw;transform:translateX(-50%);
+  border:.9cqw solid transparent;border-top:0;border-bottom-color:#fff;
+}
+.titulo-janelinha{
+  width:100%;background:transparent;border:0;cursor:pointer;font-family:inherit;display:flex;justify-content:space-between;
+  align-items:center;font-size:1.75cqw;color:#2f3336;padding:0 0 .9cqw;text-align:left;
+}
+.titulo-janelinha i{font-style:normal;font-size:2.2cqw;color:#5b5f63;}
+.janelinha .duas{display:flex;gap:.8cqw;}
+.janelinha .meia,.janelinha .cheia{
+  flex:1;background:#f4f4f3;border-radius:.5cqw;padding:1cqw .6cqw;display:flex;flex-direction:column;align-items:center;gap:.3cqw;
+}
+.janelinha .cheia+.cheia{margin-top:.6cqw;}
+.janelinha b{font-size:1.9cqw;color:var(--verde-texto);font-weight:600;display:flex;align-items:center;gap:.4cqw;}
+.janelinha b svg{width:1.8cqw;height:1.8cqw;fill:var(--verde-texto);}
+.janelinha b i{font-style:normal;font-size:1.3cqw;}
+.janelinha span{font-size:1.45cqw;color:#2f3336;text-align:center;}
+.janelinha .meia.vermelha{background:#fde5e2;}
+.janelinha .meia.vermelha b{color:#e8442e;}
+.janelinha .meia:not(.verde):not(.vermelha) b{color:#2f3336;}
+.janelinha .meia.verde b{color:var(--verde-texto);}
+.titulo-ionosfera{margin:1.2cqw 0 .4cqw;font-size:1.65cqw;color:#2f3336;}
+.texto-ionosfera{margin:0;font-size:1.35cqw;color:#5b5f63;line-height:1.45;}
+
+/* ---------- alertas próprios ---------- */
+.alertas-app{position:absolute;left:1cqw;top:6.4cqw;width:24cqw;z-index:12;display:flex;flex-direction:column;gap:.6cqw;}
+.alerta-app{
+  display:flex;gap:.6cqw;align-items:flex-start;border-radius:.3cqw;padding:.7cqw .9cqw;
+  font-size:1.5cqw;line-height:1.4;color:#2f3336;background:rgba(240,240,239,.95);
+}
+.alerta-app.vermelho{background:rgba(214,52,46,.92);color:#fff;}
+.alerta-app.amarelo{background:rgba(214,190,30,.94);color:#2f3336;}
+.alerta-app span{flex:1;}
+.alerta-app button{background:transparent;border:0;cursor:pointer;font-size:1.8cqw;color:inherit;padding:0;line-height:1;}
+
+/* ---------- diálogos ---------- */
+.lista-aviso{margin:0 0 .8cqw;padding-left:2cqw;text-align:left;font-size:1.6cqw;line-height:1.45;color:#5b5f63;}
+.lista-aviso.vermelha{color:#e8442e;}
+.dialogo-app h3.forte{font-weight:600;}
+.marca-aviso.vermelha{background:#e8442e;}
+
+/* ---------- engrenagem com drone ---------- */
+body.conectado #painel-config .grupo-opcoes.desativado button{cursor:pointer;color:#5b5f63;background:#fff;}
+body.conectado #painel-config .grupo-opcoes.desativado button.ativa{color:var(--verde-texto);background:#e4f1e8;}
+body.conectado #painel-config .botao-contorno.apagado{border-color:var(--verde);color:var(--verde-texto);}
+body.conectado #painel-config .interruptor.apagado.ligado{background:var(--verde);}
+body.conectado #painel-config .caixa-select.apagado{color:#2f3336;}
+.so-com-drone{display:none;}
+body.conectado .so-com-drone{display:block;}
+.desvio-prioridade{background:#ececeb;border-radius:.6cqw;padding:1cqw 1.2cqw;margin-bottom:1.2cqw;}
+.desvio-prioridade .diagrama svg{width:100%;height:auto;}
+.rotulos-desvio{display:flex;justify-content:space-between;font-size:1.5cqw;color:#2f3336;margin-top:.4cqw;}
+.rotulos-desvio span{max-width:40%;text-align:center;}
+.abas-geo{display:flex;align-items:center;gap:1.4cqw;border-bottom:.12cqw solid #e6e6e5;margin-bottom:1cqw;}
+.abas-geo button{
+  background:transparent;border:0;cursor:pointer;font-family:inherit;font-size:1.75cqw;color:#5b5f63;padding:.6cqw 0;
+}
+.abas-geo button.ativa{color:var(--verde-texto);border-bottom:.26cqw solid var(--verde);}
+.abas-geo .atualizar-geo{margin-left:auto;font-size:1.5cqw;padding:.4cqw .9cqw;}
+.vazio-geo{display:flex;flex-direction:column;align-items:center;gap:1cqw;padding:8cqw 0;}
+.vazio-geo svg{width:7cqw;height:7cqw;}
+.vazio-geo p{margin:0;font-size:1.8cqw;color:#2f3336;font-weight:600;text-align:center;}
+.vazio-geo.carregando *{visibility:hidden;}
+.faixa-desvio{display:flex;align-items:center;gap:1cqw;margin-top:.6cqw;}
+.faixa-desvio input{flex:1;accent-color:var(--verde);}

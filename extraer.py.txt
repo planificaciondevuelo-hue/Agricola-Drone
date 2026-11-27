@@ -1,0 +1,20 @@
+import json, base64, os
+from urllib.parse import urlparse
+
+with open('guridosdrones-treinamento.web.app.har', 'r', encoding='utf-8') as f:
+    har = json.load(f)
+
+for entry in har['log']['entries']:
+    url = urlparse(entry['request']['url'])
+    if 'guridosdrones' not in url.netloc:
+        continue
+    path = url.path.lstrip('/')
+    if not path or path.endswith('/'):
+        path += 'index.html'
+    os.makedirs(os.path.dirname(path) or '.', exist_ok=True)
+    content = entry['response']['content']
+    if 'text' in content:
+        data = base64.b64decode(content['text']) if content.get('encoding') == 'base64' else content['text'].encode('utf-8')
+        with open(path, 'wb') as out:
+            out.write(data)
+print("Listo! Archivos extraidos.")

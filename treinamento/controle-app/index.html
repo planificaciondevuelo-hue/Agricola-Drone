@@ -1,0 +1,186 @@
+<!doctype html>
+<html data-idioma-automatico lang="pt-BR">
+<head>
+<script src="/treinamento/js/manutencao.js?v=1"></script>
+<meta charset="utf-8">
+<!-- TPD-IDiomas -->
+<script src="./catalogo.js?v=db00108b4684"></script>
+<script src="./idiomas.js?v=a20785ea568a"></script>
+
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Agras</title>
+<link rel="stylesheet" href="app.css?v=7cee3c89e54f">
+</head>
+<body>
+<svg id="sprite" width="0" height="0" style="position:absolute"><defs id="sprite-defs"></defs></svg>
+<div id="palco">
+
+  <!-- ===================== TELA INICIAL ===================== -->
+  <section class="tela ativa" id="t-inicial">
+    <div class="banner">
+      <div class="icones-topo">
+        <button data-extra="usuario"><span><svg><use href="#i-perfil"/></svg></span></button>
+        <button data-extra="notificacoes"><span><svg><use href="#i-sino"/></svg></span></button>
+        <button data-extra="gerais"><span><svg><use href="#i-hexa"/></svg></span></button>
+        <button data-extra="arquivos"><span><svg><use href="#i-pasta"/></svg></span></button>
+      </div>
+      <!-- boas-vindas do Centro de Treinamento (no lugar da propaganda do Agras) -->
+      <div class="bv">
+        <span class="bv-selo">CENTRO DE TREINAMENTO</span>
+        <h1>Bem-vindo ao Centro de Treinamento <em>Guri dos Drones</em></h1>
+        <p class="bv-frase">Aqui você pode errar quantas vezes quiser.</p>
+        <ul class="bv-itens">
+          <li><b>1</b>Treine com o controle de verdade</li>
+          <li><b>2</b>Erre, entenda o porquê e tente de novo</li>
+          <li><b>3</b>Leve para o campo só o que deu certo</li>
+        </ul>
+      </div>
+      <svg class="bv-arte" viewBox="0 0 760 820" aria-hidden="true">
+        <defs>
+          <linearGradient id="bv-ceu" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff" stop-opacity=".16"/><stop offset="1" stop-color="#ffffff" stop-opacity="0"/></linearGradient>
+          <radialGradient id="bv-nevoa" cx=".5" cy="0" r="1"><stop offset="0" stop-color="#e8fff1" stop-opacity=".55"/><stop offset="1" stop-color="#e8fff1" stop-opacity="0"/></radialGradient>
+        </defs>
+        <circle cx="400" cy="330" r="300" fill="url(#bv-ceu)"/>
+        <!-- linhas da lavoura em perspectiva -->
+        <g stroke="#9fdc6f" stroke-opacity=".55" stroke-width="5" stroke-linecap="round">
+          <path d="M380 560 L40 820"/><path d="M390 560 L170 820"/><path d="M400 560 L300 820"/>
+          <path d="M410 560 L430 820"/><path d="M420 560 L560 820"/><path d="M430 560 L690 820"/><path d="M440 560 L760 790"/>
+        </g>
+        <path d="M200 820 L390 560 L430 560 L560 820 Z" fill="#7be08a" fill-opacity=".18"/>
+        <!-- névoa da pulverização -->
+        <path d="M300 420 L200 650 Q400 700 600 650 L500 420 Z" fill="url(#bv-nevoa)"/>
+        <!-- drone visto de cima, oito hélices em quatro braços -->
+        <g transform="translate(400 330)">
+          <g stroke="#1b2b22" stroke-width="16" stroke-linecap="round">
+            <path d="M-150 -110 L150 110"/><path d="M150 -110 L-150 110"/>
+          </g>
+          <g fill="#ffffff" fill-opacity=".22" stroke="#ffffff" stroke-opacity=".7" stroke-width="3">
+            <circle cx="-150" cy="-110" r="72"/><circle cx="150" cy="-110" r="72"/>
+            <circle cx="-150" cy="110" r="72"/><circle cx="150" cy="110" r="72"/>
+          </g>
+          <g fill="#1b2b22"><circle cx="-150" cy="-110" r="14"/><circle cx="150" cy="-110" r="14"/><circle cx="-150" cy="110" r="14"/><circle cx="150" cy="110" r="14"/></g>
+          <rect x="-78" y="-96" width="156" height="192" rx="34" fill="#f4f6f5"/>
+          <rect x="-50" y="-62" width="100" height="124" rx="20" fill="#00b951"/>
+          <circle cx="0" cy="-74" r="9" fill="#1b2b22"/>
+          <path d="M-22 18 L0 -22 L22 18" fill="none" stroke="#fff" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
+        </g>
+      </svg>
+    </div>
+    <div class="rodape-inicial"></div>
+    <button class="cartao-ini" id="c-registros" data-extra="registros">
+      <span class="txt">Gerenciamento de registros</span><svg viewBox="0 0 48 62"><use href="#i-documento" x="0" y="7" width="48" height="48"/></svg>
+    </button>
+    <button class="cartao-ini" id="c-dispositivo" data-extra="dispositivo">
+      <span class="txt">Gerenciamento do dispositivo<small>Atualizado</small></span><svg viewBox="0 0 48 62"><use href="#i-cubo" x="0" y="7" width="48" height="48"/></svg>
+    </button>
+    <div class="cartao-ini" id="c-conexao">
+      <div class="estado" id="estado-conexao"><span class="nao"></span><span>Aeronave desconectada</span></div>
+      <button id="bt-comecar">Começar</button>
+    </div>
+  </section>
+
+  <!-- ===================== MAPA ===================== -->
+  <section class="tela" id="t-mapa">
+    <svg id="mundo" viewBox="0 0 1920 1200" preserveAspectRatio="none">
+      <g id="vista">
+        <rect x="-4000" y="-4000" width="10000" height="10000" fill="#1d2023"/>
+        <image id="foto-mapa" x="-960" y="-600" width="3840" height="2400" preserveAspectRatio="none"/>
+        <rect class="fundo-padrao" x="0" y="0" width="1920" height="1200" fill="rgb(222,238,214)" opacity=".55"/>
+        <g id="camada-tarefas"></g>
+        <g id="camada-rota"></g>
+        <g id="camada-trilha"></g>
+        <g id="camada-marcos"></g>
+        <g id="camada-edicao"></g>
+        <g id="camada-aero"></g>
+      </g>
+    </svg>
+    <svg class="reticulo oculto" id="reticulo" viewBox="0 0 80 80"><use href="#i-reticulo-mira"/></svg>
+    <!-- alça de direção da rota (ANALISE_LINHAS 2.15): fixa na tela, só na edição -->
+    <svg class="alca oculto" id="alca" viewBox="0 0 80 80"><circle cx="40" cy="40" r="33.75" fill="rgba(255,255,255,.32)" stroke="#FFFFFF" stroke-width="2.5" stroke-dasharray="4.7 4.94"/><circle class="pega" cx="40" cy="40" r="9.75" fill="#EDD600" stroke="#FFFFFF" stroke-width="3.5"/></svg>
+
+    <div class="fpv" id="fpv"><img id="fpv-fluxo" alt=""><canvas id="fpv-tela"></canvas><span class="linha"></span></div>
+
+    <div class="barra-estado">
+      <button class="bt-modo" id="bt-modo"><svg viewBox="0 0 24 24"><use href="#i-modo"/></svg></button>
+      <div class="estado-voo" id="estado-voo">Aeronave desconectada</div>
+      <div id="status-drone">
+        <div class="status" id="s-sinal" data-jan="sinal"><svg viewBox="0 0 48 48"><use href="#i-sinal"/></svg></div>
+        <div class="status" id="s-gps" data-jan="rtk"><svg viewBox="0 0 48 48"><use href="#i-sat"/></svg><span class="num">0</span><span class="tipo">GNSS</span></div>
+        <div class="status" id="s-bat" data-jan="bateria"><svg viewBox="0 0 48 48"><use href="#i-bat-drone"/></svg><b>0<i>%</i></b></div>
+        <div class="status" id="s-tanque" data-jan="tanque"><svg viewBox="0 0 48 48"><use href="#i-tanque"/></svg><b><span class="resta">0.0</span>/0.0<i>l</i></b></div>
+      </div>
+      <div class="status" id="s-rc" data-jan="cr"><svg viewBox="0 0 42 72"><use href="#i-rc-bat"/></svg><b id="rc-bat">56</b></div>
+      <button class="bt-engr" id="bt-engr"><svg viewBox="0 0 24 24"><use href="#i-engr"/></svg></button>
+    </div>
+
+    <div class="ferramentas" id="ferramentas">
+      <div class="escala-mapa" id="escala-mapa"><span>10m</span><svg viewBox="0 0 60 20"><use href="#i-escala"/></svg></div>
+      <button class="bt-f" data-f="prescricao"><svg viewBox="0 0 48 48"><use href="#i-pasta-mais"/></svg></button>
+      <button class="bt-f" data-f="regua"><svg viewBox="0 0 48 48"><use href="#i-regua"/></svg></button>
+      <button class="bt-f" data-f="borracha"><svg viewBox="0 0 48 48"><use href="#i-borracha"/></svg></button>
+      <button class="bt-f" data-f="local"><svg viewBox="0 0 48 48"><use href="#i-local"/></svg></button>
+      <button class="bt-f" data-f="trava"><svg viewBox="0 0 48 48"><use href="#i-rota-livre"/></svg></button>
+      <button class="bt-f" data-f="camadas"><svg viewBox="0 0 48 48"><use href="#i-camadas"/></svg></button>
+    </div>
+
+    <div class="alertas" id="alertas"></div>
+    <div class="info-dir oculto" id="info-dir"></div>
+
+    <div class="hsi"><svg viewBox="0 0 360 312" id="hsi"></svg></div>
+    <button class="bt-radar" id="bt-radar"><svg viewBox="0 0 80 80" style="width:80px;height:80px"><use href="#i-radar-btn"/></svg></button>
+    <button class="bt-pouso"><svg viewBox="0 0 80 80" style="width:80px;height:80px"><use href="#i-pouso"/></svg></button>
+    <div class="osd">
+      <div class="c c1"><svg class="ic-alt" id="o-alt-ic" viewBox="0 0 30 36"><g fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M-1.5 27L4 8L10 18Q13 21 16.5 21.5Q19.5 22 23.5 27Z"/></g></svg><span id="o-alt-tit">Relativo à<br>origem</span><b id="o-alt">0,0<i>m</i></b></div>
+      <div class="c c2"><span>Velocidade</span><b id="o-vel">0.0<i>km/h</i></b></div>
+      <div class="c c3"><span>Distância</span><b id="o-dist">0.0<i>m</i></b></div>
+      <div class="c c4"><span>Fluxo</span><b id="o-flu">0.0<i>L/Min</i></b></div>
+    </div>
+
+    <div class="dir-centro" id="dir-centro"></div>
+    <div class="acoes" id="acoes"></div>
+    <!-- "Retornar à" (rota pausada no manual): ponto de interrupção / 1 / 2, ou conexão / inicial -->
+    <div class="retornar-a oculto" id="retornar-a"></div>
+
+    <button class="puxador" id="puxador"><svg viewBox="0 0 24 48" id="puxador-seta"><use href="#i-seta-dir"/></svg></button>
+    <aside class="painel" id="painel"></aside>
+  </section>
+
+  <!-- ===================== MODOS ===================== -->
+  <section class="tela" id="t-modos">
+    <h2>Selecione o modo da tarefa</h2>
+    <button class="fechar" id="modos-fechar"><svg viewBox="0 0 48 48"><use href="#i-x"/></svg></button>
+    <p class="grupo" style="left:72px">Agricultura</p>
+    <p class="grupo" data-mapeamento-admin style="display:none;left:1290px">Mapeamento</p>
+    <button class="cartao-modo" data-modo="rota" style="left:72px;top:207px;width:1140px;height:540px"><b>Rota</b><svg viewBox="0 0 48 48"><rect x="6" y="8" width="36" height="32" rx="4" fill="none" stroke="#fff" stroke-width="3.4"/><path d="M14 18h20M14 26h20M14 34h12" stroke="#fff" stroke-width="3.4"/></svg></button>
+    <button class="cartao-modo mapeamento" data-modo="maprota" data-mapeamento-admin style="display:none;left:1290px;top:207px;width:558px;height:540px"><b>Mapeamento de rota</b><svg viewBox="0 0 48 48"><rect x="6" y="6" width="16" height="16" rx="2" fill="none" stroke="#fff" stroke-width="3.4"/><rect x="26" y="6" width="16" height="16" rx="2" fill="none" stroke="#fff" stroke-width="3.4"/><rect x="6" y="26" width="16" height="16" rx="2" fill="none" stroke="#fff" stroke-width="3.4"/><circle cx="34" cy="34" r="7" fill="none" stroke="#fff" stroke-width="3.4"/></svg></button>
+    <button class="cartao-modo" data-modo="manual" style="left:72px;top:771px;width:558px;height:360px"><b>Manual</b><span class="letra">M</span></button>
+    <button class="cartao-modo" data-modo="arvore" style="left:654px;top:771px;width:558px;height:360px"><b>Árvore frutífera</b><svg viewBox="0 0 48 48"><path d="M22 6 8 24h9v14h10V24h9z" fill="none" stroke="#fff" stroke-width="3.4" stroke-linejoin="round"/><path d="M30 34h12M30 40h12" stroke="#fff" stroke-width="3.4"/></svg></button>
+    <button class="cartao-modo mapeamento" data-modo="maparvore" data-mapeamento-admin style="display:none;left:1290px;top:771px;width:558px;height:360px"><b>Mapeamento de árvores</b><svg viewBox="0 0 48 48"><path d="M18 6 6 22h8v14h8V22h8z" fill="none" stroke="#fff" stroke-width="3.4" stroke-linejoin="round"/><circle cx="36" cy="34" r="7" fill="none" stroke="#fff" stroke-width="3.4"/></svg></button>
+  </section>
+
+  <!-- engrenagem e telas extras -->
+  <div id="cfg"></div>
+  <div id="extra"></div>
+</div>
+
+<script src="virtual.js?v=dbfaa486d88e"></script>
+<script src="nucleo.js?v=f18aea33b198"></script>
+<script src="inicial.js?v=2261cd335d15"></script>
+<script src="mapa.js?v=a3a943468669"></script>
+<script src="config.js?v=f8c7a1b0e3de"></script>
+<script src="extras.js?v=b78bc4c2a368"></script>
+<script src="protecao.js?v=f6dca8e4c740"></script>
+<script src="botoes.js?v=a8bed513db06"></script>
+<script src="rotas_relatorios.js?v=c59eefd45840"></script>
+<script src="bateria.js?v=7d511ac08bc3"></script>
+<script src="fpv3d.js?v=b3b1db9d3c1b"></script>
+<script src="conta.js?v=11ae34841803"></script>
+<script src="rtc.js?v=5dc196f57154"></script>
+<script src="auxilios.js?v=4d083f4daf90"></script>
+
+<script src="j100-paginas.js?v=eav-relatorio-2"></script>
+<script src="j100.js?v=eav-relatorio-2"></script>
+<script src="j100-acoes.js?v=caecc877bc31"></script>
+<script src="t10.js?v=ec89466a428e"></script>
+</body>
+</html>

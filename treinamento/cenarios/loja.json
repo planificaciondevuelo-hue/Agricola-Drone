@@ -1,0 +1,15 @@
+{
+  "_como_funciona": "Mapa real so aparece para aluno (na Loja de mapas e no simulador de quem tem conta) se o id dele estiver em 'liberados'. Todo mapa novo do Gerador de Mapas Reais nasce BLOQUEADO: fica so neste computador, para teste, e nao e publicado. Os mapas da propriedade do Eduardo ficam bloqueados (decisao de 02/10/2026). Para liberar um mapa: ponha o id aqui (ex.: \"real-nome-do-mapa\") e tire as linhas dele do 'ignore' do firebase.json.",
+  "liberados": [
+    "real-pivo-planos",
+    "real-terracos-morro",
+    "real-varzea-rio",
+    "real-sede-acude",
+    "real-povoado-rural",
+    "real-mato-alto",
+    "real-pasto-arvores"
+  ],
+  "_gratis": "Mapas reais abertos a todo aluno com conta, sem comprar (decisao do Eduardo em 02/10/2026: a Casa do Guri dos Drones para todo mundo conhecer).",
+  "gratis": [],
+  "_gratis_12_11_2026": "Eduardo, 12/11/2026: 'deixa somente 3 mapas pra todos'. Os alunos ficam com os 3 mapas do jogo. Antes: [\"real-pivo-planos\",\"real-terracos-morro\",\"real-varzea-rio\",\"real-sede-acude\",\"real-povoado-rural\",\"real-mato-alto\",\"real-pasto-arvores\"]"
+}

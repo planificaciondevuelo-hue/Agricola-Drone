@@ -1,0 +1,79 @@
+[
+ {
+  "arquivo": "pivo-planos.cenario.json",
+  "id": "real-pivo-planos",
+  "nome": "Pivô e talhões planos",
+  "nivel": [
+   "Fácil",
+   "f"
+  ],
+  "desc": "Terreno quase plano com um pivô central de 100 m de raio, talhões retangulares de soja, milho e trigo, estrada de terra com rede elétrica ao longo dela, sede com casa e galpão e algumas árvores. 20,2 ha.",
+  "area_ha": 20.2
+ },
+ {
+  "arquivo": "terracos-morro.cenario.json",
+  "id": "real-terracos-morro",
+  "nome": "Terraços no morro",
+  "nivel": [
+   "Difícil",
+   "d"
+  ],
+  "desc": "Morro com terraços em curva de nível, lavouras em faixas que seguem as curvas, poucas árvores e uma rede trifásica que corta a encosta. Sede e base ficam no pé do morro. 19,4 ha.",
+  "area_ha": 19.4
+ },
+ {
+  "arquivo": "varzea-rio.cenario.json",
+  "id": "real-varzea-rio",
+  "nome": "Várzea com rio",
+  "nivel": [
+   "Médio",
+   "m"
+  ],
+  "desc": "Área baixa de várzea cortada por um rio sinuoso com mata ciliar densa nas margens, talhões planos de soja e milho, uma ponte de madeira na estrada e casas ao fundo, na encosta. 19,3 ha.",
+  "area_ha": 19.3
+ },
+ {
+  "arquivo": "sede-acude.cenario.json",
+  "id": "real-sede-acude",
+  "nome": "Sede da fazenda e açude",
+  "nivel": [
+   "Fácil",
+   "f"
+  ],
+  "desc": "Sede de fazenda com casa, galpões, curral, açude com barragem, pomar em fileiras, estradas de terra e rede elétrica até a sede, para voos de fotos, órbitas e mapeamento de uma propriedade rural (19,2 ha).",
+  "area_ha": 19.2
+ },
+ {
+  "arquivo": "povoado-rural.cenario.json",
+  "id": "real-povoado-rural",
+  "nome": "Povoado rural",
+  "nivel": [
+   "Médio",
+   "m"
+  ],
+  "desc": "Povoado rural com 24 casas pequenas ao longo de uma rua e uma travessa, capela, praça de terra, quintais com árvores, postes e fios, roça e pasto em volta, para mapeamento sobre telhados (18,5 ha).",
+  "area_ha": 18.5
+ },
+ {
+  "arquivo": "mato-alto.cenario.json",
+  "id": "real-mato-alto",
+  "nome": "Talhão cercado de mato",
+  "nivel": [
+   "Difícil",
+   "d"
+  ],
+  "desc": "Talhão de soja limpo no meio de uma área abandonada: em volta há uma faixa larga de mato alto e fechado, com centenas de arbustos em moitas, capim alto, daninhas que invadem a borda da lavoura, capões de árvores nos cantos, cerca e estrada de terra. Para treinar obstáculos baixos e aplicação perto do mato (19,3 ha).",
+  "area_ha": 19.3
+ },
+ {
+  "arquivo": "pasto-arvores.cenario.json",
+  "id": "real-pasto-arvores",
+  "nome": "Pastagem com árvores secas e verdes",
+  "nivel": [
+   "Médio",
+   "m"
+  ],
+  "desc": "Pastagem de braquiária dividida em cinco piquetes em estágios diferentes, com cercas, aguada e trilhas de gado, e muitas árvores espalhadas: verdes de alturas bem variadas, secas com galhos e palitos secos retos, dentro e em volta do pasto, para treinar desvio de obstáculos e aplicação em pastagem (19,7 ha).",
+  "area_ha": 19.7
+ }
+]

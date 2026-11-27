@@ -1,0 +1,2892 @@
+<!doctype html>
+<html lang="pt-BR" data-idioma-automatico>
+<meta charset="utf-8">
+<script src="/treinamento/js/manutencao.js?v=1"></script>
+<script src="../js/pausa.js?v=188dc54f2c6a"></script>
+<!-- TPD-IDiomas -->
+<script src="../js/idiomas/catalogo.js?v=2bbe6ff20684"></script>
+<script src="../js/idiomas/idiomas.js?v=ddee82f66a1b"></script>
+<script src="../js/campo/traducao_jogo.js?v=3e1424810e83"></script>
+
+<title>Simulador de Pulverização T50</title>
+<style>
+  :root{--fundo:rgba(14,16,20,.86);--linha:rgba(255,255,255,.10);--texto:#EEF2F6;--fraco:#8E99A6;
+    --azul:#2F80ED;--azul2:#4A94F5;--alerta:#F5A524;--perigo:#F04438;--ok:#32D583}
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;overflow:hidden;background:#0c1014;font-family:Roboto,"Segoe UI",sans-serif;color:var(--texto)}
+  canvas{display:block}
+  button{font:inherit;color:inherit;border:none;background:none;cursor:pointer}
+  button:focus-visible,input:focus-visible{outline:2px solid var(--azul2);outline-offset:2px}
+  [hidden]{display:none!important}
+
+  /* barra superior de status */
+  #topo{position:absolute;left:0;right:0;top:0;display:flex;align-items:center;gap:14px;padding:7px 12px;
+    background:linear-gradient(rgba(8,10,13,.9),rgba(8,10,13,.55));font-size:13px}
+  #topo .estado{font-weight:500}
+  #topo .estado small{display:block;font-size:11px;color:var(--fraco);font-weight:400}
+  #topo .sp{flex:1}
+  #topo .v{display:flex;flex-direction:column;align-items:flex-end;min-width:58px}
+  #topo .v span{font-size:10.5px;color:var(--fraco)}
+  #topo .v b{font-family:"Roboto Mono",Consolas,monospace;font-size:14.5px;font-weight:500;font-variant-numeric:tabular-nums}
+  #topo b.al{color:var(--alerta)} #topo b.cr{color:var(--perigo)} #topo b.ok{color:var(--ok)}
+
+  /* indicador de radar */
+  #radar{position:absolute;left:14px;bottom:14px;width:168px;height:168px}
+
+  #bar{position:absolute;right:12px;bottom:12px;display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;max-width:70vw}
+  #bar button{padding:9px 14px;border-radius:8px;background:var(--fundo);border:1px solid var(--linha);font-size:14px;font-weight:500}
+  #bar button:hover{border-color:rgba(255,255,255,.25)}
+  #bar button.on{background:var(--azul);border-color:var(--azul)}
+  #bar button.cr{border-color:var(--perigo);color:#ffb4ae}
+  #vistas{display:flex;border:1px solid var(--linha);border-radius:8px;overflow:hidden}
+  #bar #vistas button{border:none;border-radius:0;padding:9px 12px}
+  #bar #vistas button+button{border-left:1px solid var(--linha)}
+  #bar #vistas button[aria-pressed="true"]{background:var(--azul)}
+
+  /* visão: tela do controle */
+  #vCtrlRc{position:absolute;pointer-events:none}
+  #vCtrlRc svg{display:block;width:100%;height:100%;filter:drop-shadow(0 18px 30px rgba(0,0,0,.55))}
+  #vCtrlRc .rcbt{pointer-events:auto;cursor:pointer}
+  #vCtrlRc .rcbt:focus-visible{outline:none}
+  #vCtrlRc .rcbt:focus-visible circle{stroke:#4A94F5;stroke-width:10}
+  #tela{position:absolute;overflow:hidden;border-radius:6px;pointer-events:none;color:#fff}
+  #tela .tTopo{position:absolute;left:0;right:0;top:0;display:flex;align-items:center;gap:.5em;padding:.35em .7em;background:rgba(10,12,15,.74)}
+  #tela .tTopo .sp{flex:1}
+  #tela .tTopo b.e{display:block;font-weight:500;font-size:1.02em}
+  #tela .tTopo small{display:block;font-size:.72em;color:#9aa6b2}
+  #tela .chip{font-size:.82em;padding:.18em .5em;border-radius:.4em;background:rgba(255,255,255,.09);white-space:nowrap}
+  #tela .chip b{font-family:"Roboto Mono",Consolas,monospace;font-weight:500}
+  #tela .ok{color:#32D583} #tela b.al{color:#F5A524} #tela b.cr{color:#F04438}
+  #tela .tFpv{position:absolute;left:.7em;top:3.1em;font-size:.7em;letter-spacing:.1em;padding:.1em .45em;border-radius:.3em;background:rgba(0,0,0,.45)}
+  #tela .tMira{position:absolute;left:50%;top:50%;width:2.2em;height:2.2em;margin:-1.1em 0 0 -1.1em;border:2px solid rgba(255,255,255,.55);border-radius:50%}
+  #rMapa{position:absolute;left:.6em;bottom:.6em;width:30%;height:34%;border-radius:.5em;border:1px solid rgba(255,255,255,.22)}
+  #rDados{position:absolute;right:.6em;bottom:.6em;display:grid;grid-template-columns:auto auto;gap:.12em .9em;padding:.5em .75em;border-radius:.5em;background:rgba(10,12,15,.68);font-size:.92em}
+  #rDados span{color:#9aa6b2} #rDados b{font-family:"Roboto Mono",Consolas,monospace;font-weight:500;text-align:right}
+  #rObs{position:absolute;left:50%;top:20%;transform:translateX(-50%);padding:.3em .8em;border-radius:.4em;background:rgba(240,68,56,.88);font-weight:500;white-space:nowrap}
+  #rDesvio{position:absolute;left:50%;bottom:.7em;transform:translateX(-50%);padding:.2em .6em;border-radius:.3em;background:rgba(0,0,0,.55);color:#F04438;font-size:.82em;font-weight:600;white-space:nowrap}
+  #vOpRot{position:absolute;transform:translate(-50%,-170%);padding:3px 9px;border-radius:999px;background:rgba(10,12,16,.72);border:1px solid rgba(255,255,255,.28);
+    font-size:12px;font-weight:500;white-space:nowrap;pointer-events:none}
+
+  #alerta{position:absolute;left:50%;top:62px;transform:translateX(-50%);width:min(460px,92vw);background:rgba(28,22,10,.94);
+    border:1px solid var(--alerta);border-radius:10px;padding:12px 14px}
+  #alerta.vermelho{background:rgba(34,12,12,.94);border-color:var(--perigo)}
+  #alerta b{display:block;color:var(--alerta);font-size:15px;margin-bottom:3px}
+  #alerta.vermelho b{color:var(--perigo)}
+  #alerta span{display:block;font-size:13.5px;line-height:1.45;color:#E9E2D3}
+  #alerta .bts{display:flex;gap:8px;margin-top:10px}
+  #alerta .bts button{flex:1;padding:9px;border-radius:7px;background:rgba(255,255,255,.08);font-size:13.5px;font-weight:500}
+  #alerta .bts button.pri{background:var(--alerta);color:#1a1307}
+
+  .modal{position:absolute;inset:0;display:grid;place-items:center;background:rgba(6,8,10,.62);padding:16px}
+  .modal .c{width:min(480px,100%);max-height:100%;overflow-y:auto;background:#161a1f;border:1px solid var(--linha);border-radius:14px;padding:18px}
+  .modal h2{margin:0 0 4px;font-size:20px;font-weight:500}
+  .modal p.s{margin:0 0 12px;font-size:13.5px;color:#B4BEC9;line-height:1.45}
+  .check{display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--linha);font-size:14px}
+  .check .n{flex:1}
+  .check .r{font-family:"Roboto Mono",monospace;font-size:13px}
+  .check .r.ok{color:var(--ok)} .check .r.al{color:var(--alerta)}
+  .deslizar{position:relative;margin-top:16px;height:52px;border-radius:999px;background:rgba(255,255,255,.07);overflow:hidden}
+  .deslizar .rot{position:absolute;inset:0;display:grid;place-items:center;font-size:14px;color:var(--fraco);pointer-events:none}
+  .deslizar input{position:absolute;inset:0;width:100%;height:100%;margin:0;appearance:none;-webkit-appearance:none;background:transparent;cursor:grab}
+  .deslizar input::-webkit-slider-thumb{-webkit-appearance:none;width:52px;height:52px;border-radius:50%;background:var(--azul);
+    box-shadow:0 0 0 6px rgba(47,128,237,.25)}
+  .deslizar input::-moz-range-thumb{width:52px;height:52px;border:none;border-radius:50%;background:var(--azul)}
+  .modal .bts{display:flex;gap:8px;margin-top:12px}
+  .modal .bts button{flex:1;padding:10px;border-radius:8px;background:rgba(255,255,255,.08);font-weight:500}
+  .modal .bts button.pri{background:var(--azul)}
+  #queda .c{border-color:var(--perigo)}
+  #queda h2{color:var(--perigo)}
+  .licao{margin:0;font-size:13.5px;line-height:1.5;color:#C9D1D9;background:rgba(255,255,255,.05);border-radius:8px;padding:10px 12px}
+  .grade{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--linha);border-radius:8px;overflow:hidden;margin:8px 0}
+  .grade div{background:#1b2027;padding:8px 10px}
+  .grade span{display:block;font-size:11.5px;color:var(--fraco)}
+  .grade b{font-family:"Roboto Mono",monospace;font-size:15px;font-weight:500}
+
+  /* painel inicial */
+  #painel{position:absolute;inset:0;display:flex;align-items:center;padding:16px;
+    background:linear-gradient(90deg,rgba(8,10,13,.9) 0%,rgba(8,10,13,.55) 55%,rgba(8,10,13,0) 100%)}
+  #painel .c{width:min(540px,100%);max-height:100%;overflow-y:auto;background:rgba(18,21,26,.95);border:1px solid var(--linha);border-radius:14px;padding:18px}
+  #painel .sobre{font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--azul2);margin:0 0 2px}
+  #painel h1{margin:0 0 14px;font-size:24px;font-weight:500}
+  #painel h3{margin:18px 0 8px;font-size:12.5px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;color:var(--fraco)}
+  .cen{display:flex;flex-direction:column;gap:8px}
+  .cen button{text-align:left;padding:11px 13px;border-radius:10px;background:rgba(255,255,255,.04);border:1.5px solid var(--linha)}
+  .cen button[aria-pressed="true"]{border-color:var(--azul);background:rgba(47,128,237,.12)}
+  .cen .t{display:flex;align-items:center;gap:8px;font-size:15.5px;font-weight:500}
+  .nv{font-size:11px;padding:2px 8px;border-radius:999px;border:1px solid currentColor}
+  .nv.f{color:var(--ok)} .nv.m{color:var(--alerta)} .nv.d{color:var(--perigo)}
+  .cen .d{display:block;margin-top:4px;font-size:13px;line-height:1.45;color:#B4BEC9}
+  .seg{display:flex;gap:6px;flex-wrap:wrap}
+  .seg button{flex:1;min-width:110px;padding:9px 8px;border-radius:8px;background:rgba(255,255,255,.05);border:1.5px solid var(--linha);font-size:13px;text-align:center}
+  .seg button[aria-pressed="true"]{border-color:var(--azul);background:rgba(47,128,237,.14)}
+  .ajuda{font-size:12px;color:var(--fraco);line-height:1.45;margin:6px 0 0}
+  #cFaixa{display:block;width:100%;height:auto;aspect-ratio:1000/150;border-radius:8px;margin-top:4px;background:#2a241b}
+  #ajFaixa b{font-weight:500} #ajFaixa b.ok{color:var(--ok)} #ajFaixa b.al{color:var(--alerta)}
+  .campo{display:grid;grid-template-columns:1fr auto;align-items:center;gap:2px 10px;margin:9px 0}
+  .campo label{font-size:13.5px}
+  .campo output{font-family:"Roboto Mono",monospace;font-size:13.5px}
+  .campo input{grid-column:1/-1;width:100%;accent-color:var(--azul)}
+  .chave{display:flex;align-items:center;gap:10px;padding:9px 0;border-top:1px solid var(--linha)}
+  .chave .g{flex:1}
+  .chave .g b{display:block;font-size:14px;font-weight:500}
+  .chave .g small{display:block;font-size:12px;color:var(--fraco);line-height:1.4;margin-top:1px}
+  .tog{flex:none;width:44px;height:25px;border-radius:999px;background:#3a414a;position:relative}
+  .tog::after{content:"";position:absolute;top:2.5px;left:2.5px;width:20px;height:20px;border-radius:50%;background:#fff;transition:transform .15s}
+  .tog[aria-pressed="true"]{background:var(--azul)}
+  .tog[aria-pressed="true"]::after{transform:translateX(19px)}
+  #iniciar{width:100%;margin-top:16px;padding:12px;border-radius:9px;background:var(--azul);font-size:16px;font-weight:500}
+  #iniciar:hover{background:var(--azul2)}
+  #carregando{position:absolute;inset:0;display:grid;place-items:center;background:#0c1014;color:#cfe0f0;font-size:15px;z-index:9}
+  /* mapeamento caminhando */
+  #mTopo{position:absolute;left:0;right:0;top:0;display:flex;align-items:center;gap:14px;padding:7px 12px;
+    background:linear-gradient(rgba(8,10,13,.9),rgba(8,10,13,.55));font-size:13px}
+  #mTopo .estado{font-weight:500} #mTopo .estado small{display:block;font-size:11px;color:var(--fraco);font-weight:400}
+  #mTopo .sp{flex:1}
+  #mTopo .v{display:flex;flex-direction:column;align-items:flex-end;min-width:58px}
+  #mTopo .v span{font-size:10.5px;color:var(--fraco)}
+  #mTopo .v b{font-family:"Roboto Mono",Consolas,monospace;font-size:14.5px;font-weight:500;font-variant-numeric:tabular-nums}
+  #mTopo b.ok{color:var(--ok)}
+  #mMapa{position:absolute;left:12px;bottom:12px;width:270px;height:270px;border-radius:12px;border:1px solid var(--linha);background:#0e1216}
+  #mBar{position:absolute;right:12px;bottom:12px;width:min(390px,calc(100vw - 310px));background:var(--fundo);border:1px solid var(--linha);border-radius:12px;padding:10px}
+  #mBar .seg button{min-width:0;font-size:12.5px;padding:8px 4px}
+  #mBar .linha{display:flex;gap:6px;margin-top:8px}
+  #mBar .linha button{flex:1;padding:10px 6px;border-radius:8px;background:rgba(255,255,255,.08);font-size:13.5px;font-weight:500}
+  #mBar .linha button.pri{background:var(--azul)}
+  #mBar .linha button.ok{background:#1f7a4d}
+  #mBar .linha button:disabled{opacity:.4;cursor:default}
+  #mRaio{display:flex;align-items:center;gap:8px;margin-top:8px;font-size:13px}
+  #mRaio input{flex:1;accent-color:var(--azul)} #mRaio output{font-family:"Roboto Mono",monospace;min-width:44px;text-align:right}
+  #mDica{margin:8px 0 0;font-size:12px;line-height:1.45;color:#B4BEC9}
+  #mAjuda{position:absolute;left:12px;top:58px;width:min(360px,calc(100vw - 24px));background:rgba(18,21,26,.94);border:1px solid var(--linha);border-radius:12px;padding:12px 14px;font-size:13px;line-height:1.5}
+  #mAjuda b{display:block;font-size:14.5px;font-weight:500;margin-bottom:4px}
+  #mAjuda kbd{font-family:"Roboto Mono",monospace;font-size:11.5px;background:rgba(255,255,255,.1);border-radius:4px;padding:1px 5px}
+  #mAjuda button{margin-top:8px;padding:7px 12px;border-radius:7px;background:rgba(255,255,255,.08);font-size:13px}
+  .mapaSt{font-size:13.5px;line-height:1.45;padding:10px 12px;border-radius:9px;background:rgba(255,255,255,.04);border:1px solid var(--linha);margin-bottom:8px}
+  .mapaSt.vazio{border-color:rgba(245,165,36,.45);color:#F3D9A8}
+  #iniciar:disabled{background:#2a3038;color:#8E99A6;cursor:default}
+  @media (max-width:760px){#mMapa{width:170px;height:170px}#mBar{width:calc(100vw - 196px)}#mTopo .v:nth-child(n+6){display:none}}
+  /* tela de início */
+  #inicio{position:absolute;inset:0;display:flex;align-items:center;padding:28px clamp(16px,5vw,64px);
+    background:linear-gradient(90deg,rgba(7,9,12,.94) 0%,rgba(7,9,12,.72) 38%,rgba(7,9,12,0) 68%)}
+  /* sem barra de rolagem: letras um pouco menores e, se ainda nao couber, o
+     painel inteiro encolhe para caber na altura (encaixarInicio, abaixo) */
+  #inicio .c{width:min(440px,100%);max-height:100%;overflow-x:hidden;overflow-y:auto;scrollbar-width:none;padding-right:4px;transform-origin:left center}
+  #inicio .c::-webkit-scrollbar{display:none}
+  #inicio .c #bComecar{position:sticky;bottom:4px;z-index:3}
+  #inicio .sobre{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--azul2);margin:0 0 8px}
+  #inicio h1{margin:0;font-size:clamp(30px,4.4vw,48px);line-height:1;font-weight:600;letter-spacing:-.01em}
+  #inicio h1 span{display:block;color:var(--azul2)}
+  #inicio .lead{margin:10px 0 14px;font-size:13.5px;line-height:1.45;color:#C3CCD5;max-width:40ch}
+  #inicio .rot{display:block;margin:0 0 7px;font-size:12.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--fraco)}
+  #nomeOp{width:100%;padding:12px 14px;border-radius:10px;border:1.5px solid var(--linha);background:rgba(255,255,255,.06);color:var(--texto);font:inherit;font-size:15px;margin-bottom:18px}
+  #nomeOp:focus{border-color:var(--azul2);outline:none}
+  .avatares{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:6px}
+  .avatares button{padding:10px 8px;border-radius:9px;border:1.5px solid var(--linha);background:rgba(255,255,255,.05);font-size:13.5px}
+  .avatares button[aria-pressed="true"]{border-color:var(--azul);background:rgba(47,128,237,.18)}
+  #bComecar{width:100%;margin-top:22px;padding:15px;border-radius:11px;background:var(--azul);font-size:17px;font-weight:600}
+  #bComecar:hover{background:var(--azul2)}
+  .como{margin-top:16px;font-size:13.5px;color:#B4BEC9;line-height:1.5}
+  .como summary{cursor:pointer;color:var(--texto);font-weight:500;padding:6px 0}
+  .como ol{margin:6px 0 0;padding-left:20px}
+  .como li{margin:4px 0}
+  #bInicio{margin:-4px 0 10px;padding:6px 0;font-size:13px;color:var(--fraco)}
+  #bInicio:hover{color:var(--texto)}
+  /* 13/10/2026: sair da abertura do simulador de volta à escolha do drone */
+  #bVoltarDrones{margin:0 0 14px;padding:6px 0;font-size:13px;color:var(--fraco)}
+  #bVoltarDrones:hover{color:var(--texto)}
+  body.telaInicio #topo,body.telaInicio #radar,body.telaInicio #bar{display:none}
+  /* 08/10/2026: no menu, sem o RC Plus desenhado nem a tela interna do campo (voltando da vista Controle) */
+  body.telaInicio #vCtrl,body.telaInicio #tela{display:none!important}
+  @media (max-width:760px){#inicio{align-items:flex-end;background:linear-gradient(0deg,rgba(7,9,12,.95) 0%,rgba(7,9,12,.8) 60%,rgba(7,9,12,.1) 100%)}}
+  @media (prefers-reduced-motion:reduce){.tog::after{transition:none}}
+  @media (max-width:760px){#topo .v.op{display:none}#radar{width:120px;height:120px}}
+</style>
+
+<div id="carregando">Carregando o Agras T50…</div>
+
+<div id="topo">
+  <div class="estado"><span id="tEstado">Em solo</span><small id="tModo">Modo fácil · Rota</small></div>
+  <div class="sp"></div>
+  <div class="v"><span>RTK</span><b id="hRtk" class="ok">FIX</b></div>
+  <div class="v"><span>Bateria</span><b id="hBat">100%</b></div>
+  <div class="v"><span>Tanque</span><b id="hTan">40,0 L</b></div>
+  <div class="v op"><span>Vazão</span><b id="hVaz">0,0 L/min</b></div>
+  <div class="v"><span>Velocidade</span><b id="hVel">0,0 m/s</b></div>
+  <div class="v"><span>Altura</span><b id="hAgl">0,0 m</b></div>
+  <div class="v op"><span>Aplicado</span><b id="hApl">0,00 ha</b></div>
+</div>
+
+<canvas id="radar" width="336" height="336" aria-label="Indicador de radar"></canvas>
+
+<!-- visão pela tela do controle -->
+<div id="vCtrl" hidden>
+  <div id="vCtrlRc"></div>
+  <div id="tela">
+    <div class="tTopo">
+      <span><b class="e" id="rEstado"></b><small id="rModo"></small></span><span class="sp"></span>
+      <span class="chip ok">RTK FIX</span><span class="chip">H <b id="rDist"></b></span>
+      <span class="chip">Bateria <b id="rBat"></b></span><span class="chip">Tanque <b id="rTan"></b></span>
+    </div>
+    <span class="tFpv">FPV</span>
+    <div class="tMira"></div>
+    <div id="rObs" hidden></div>
+    <div id="rDesvio" hidden>DESVIO DE OBSTÁCULOS DESLIGADO</div>
+    <canvas id="rMapa" aria-label="Mapa da tarefa"></canvas>
+    <div id="rDados">
+      <span>Altura</span><b id="rAgl"></b><span>Velocidade</span><b id="rVel"></b>
+      <span>Vazão</span><b id="rVaz"></b><span>Aplicado</span><b id="rApl"></b>
+      <span>Faixa / espaç.</span><b id="rFai"></b>
+    </div>
+  </div>
+</div>
+<div id="vOpRot" hidden></div>
+
+<div id="alerta" hidden>
+  <b id="alTit"></b><span id="alTxt"></span>
+  <div class="bts" id="alBts"></div>
+</div>
+
+<div id="bar">
+  <div id="vistas" role="group" aria-label="Visão">
+    <button data-v="drone" aria-pressed="true">Drone</button>
+    <button data-v="controle" aria-pressed="false">Controle</button>
+    <button data-v="operador" aria-pressed="false">Operador</button>
+    <button data-v="livre" aria-pressed="false">Livre</button>
+  </div>
+  <!-- velocidade do jogo (1x/4x/10x) tirada: o treino e sempre em tempo real (02/10) -->
+  <button id="bVel" hidden>1×</button>
+  <button id="bRth" class="cr">RTH</button>
+  <button id="bPausa">Pausar</button>
+  <button id="bCen">Campos</button>
+</div>
+
+<!-- mapeamento com controle remoto -->
+<div id="mapaUi" hidden>
+  <div id="mTopo">
+    <div class="estado"><span>Mapeamento com controle remoto</span><small>RC Plus · RTK do controle</small></div>
+    <div class="sp"></div>
+    <div class="v"><span>RTK</span><b class="ok">FIX ±2 cm</b></div>
+    <div class="v"><span>Pontos limite</span><b id="mPts">0</b></div>
+    <div class="v"><span>Obstáculos</span><b id="mObs">0</b></div>
+    <div class="v"><span>Área</span><b id="mArea">0,00 ha</b></div>
+    <div class="v"><span>Último ponto</span><b id="mDist">—</b></div>
+  </div>
+  <canvas id="mMapa" width="540" height="540" aria-label="Mapa do controle"></canvas>
+  <div id="mAjuda">
+    <b>Caminhe e marque o campo</b>
+    Com o RTK do controle em FIX, vá até cada canto do talhão e marque um ponto de limite.
+    Depois marque os obstáculos: contornando (polígono) ou só no centro com um raio.<br>
+    <kbd>W A S D</kbd> caminha · <kbd>Shift</kbd> corre · arraste o mouse para olhar · roda do mouse afasta<br>
+    <kbd>Espaço</kbd> marca ponto · <kbd>Backspace</kbd> desfaz · <kbd>Enter</kbd> fecha obstáculo · <kbd>1 2 3</kbd> tipo de ponto
+    <br><button id="mAjOk">Entendi</button>
+  </div>
+  <div id="mBar">
+    <div class="seg" id="mTipo">
+      <button data-v="limite" aria-pressed="true" tabindex="-1">Limite</button>
+      <button data-v="poligono" aria-pressed="false" tabindex="-1">Obstáculo</button>
+      <button data-v="circulo" aria-pressed="false" tabindex="-1">Obstáculo circular</button>
+    </div>
+    <div id="mRaio" hidden><label for="mRaioIn">Raio</label><input type="range" id="mRaioIn" min="1" max="30" step=".5" value="6"><output id="mRaioOut">6,0 m</output></div>
+    <p id="mDica"></p>
+    <div class="linha">
+      <button id="mMarcar" class="pri" tabindex="-1">Marcar ponto</button>
+      <button id="mFechar" tabindex="-1">Fechar obstáculo</button>
+      <button id="mDesfazer" tabindex="-1">Desfazer</button>
+    </div>
+    <div class="linha">
+      <button id="mLimpar" tabindex="-1">Recomeçar</button>
+      <button id="mSair" tabindex="-1">Sair</button>
+      <button id="mConcluir" class="ok" tabindex="-1">Concluir mapa</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="mFim" hidden>
+  <div class="c">
+    <h2>Mapa salvo</h2>
+    <p class="s" id="mFimTxt"></p>
+    <div class="grade" id="mFimGrade"></div>
+    <div class="bts"><button id="mFimOp" class="pri">Iniciar operação</button><button id="mFimVolta">Continuar mapeando</button></div>
+    <div class="bts"><button id="mFimCampos">Voltar aos campos</button></div>
+  </div>
+</div>
+
+<!-- verificação automática antes da tarefa -->
+<div class="modal" id="verif" hidden>
+  <div class="c">
+    <h2>Verificação automática antes da tarefa</h2>
+    <p class="s" id="vCampo"></p>
+    <div id="vLista"></div>
+    <div class="deslizar"><span class="rot">Deslize para decolar</span>
+      <input type="range" id="vDesl" min="0" max="100" value="0" aria-label="Deslize para decolar"></div>
+    <div class="bts"><button id="vCancel">Cancelar</button></div>
+  </div>
+</div>
+
+<!-- aeronave perdida -->
+<div class="modal" id="queda" hidden>
+  <div class="c">
+    <h2>Aeronave perdida</h2>
+    <p class="s" id="qMotivo"></p>
+    <p class="licao" id="qLicao"></p>
+    <div class="bts"><button id="qDenovo" class="pri">Tentar de novo</button><button id="qConfig">Mudar configuração</button></div>
+  </div>
+</div>
+
+<!-- operação concluída -->
+<div class="modal" id="fim" hidden>
+  <div class="c">
+    <h2>Operação concluída</h2>
+    <p class="s" id="fTexto"></p>
+    <div class="grade" id="fGrade"></div>
+    <div class="bts"><button id="fDenovo" class="pri">Voar de novo</button><button id="fCampos">Campos</button></div>
+  </div>
+</div>
+
+<script>
+/* tela de inicio sem barra de rolagem: se o conteudo passar da altura da
+   janela, encolhe o painel inteiro (zoom) ate caber */
+(function(){
+  function encaixarInicio(){
+    var i=document.getElementById("inicio"), c=i&&i.querySelector(".c");
+    if(!c||i.hidden) return;
+    c.style.zoom=1;
+    var livre=i.clientHeight-56, alto=c.scrollHeight;
+    if(alto>livre&&livre>100) c.style.zoom=Math.max(.55,livre/alto).toFixed(3);
+  }
+  addEventListener("resize",encaixarInicio);
+  setInterval(encaixarInicio,500);
+})();
+</script>
+<div id="inicio" hidden>
+  <div class="c">
+    <button id="bVoltarDrones" type="button">‹ Voltar à escolha do drone</button>
+    <p class="sobre">Treinamento de operador</p>
+    <h1>Simulador <span>Agras T50</span></h1>
+    <p class="lead">Mapeie o campo caminhando com o controle, configure a tarefa e acompanhe a aplicação pela câmera do drone, pela tela do controle ou ao lado do operador.</p>
+    <p class="lead" id="olaOp" hidden></p>
+    <button id="bComecar">Começar</button>
+    <details class="como"><summary>Como jogar</summary>
+      <ol>
+        <li>Escolha um campo e faça o mapa caminhando: marque os cantos do talhão e os obstáculos.</li>
+        <li>Ajuste altura, velocidade, gota e espaçamento até as faixas fecharem.</li>
+        <li>Inicie a operação, deslize para decolar e acompanhe pelas visões Drone, Controle ou Operador.</li>
+        <li>No fim, confira a cobertura do talhão, a sobreposição e o que mudar na próxima.</li>
+      </ol>
+    </details>
+  </div>
+</div>
+
+<div id="painel" hidden>
+  <div class="c">
+    <button id="bInicio">‹ Tela inicial</button>
+    <p class="sobre">Agras T50 · treinamento de operador</p>
+    <h1>Campos</h1>
+    <div class="cen" id="listaCen"></div>
+
+    <h3>Mapa do campo</h3>
+    <div class="mapaSt" id="mapaSt"></div>
+    <div class="seg">
+      <button id="bMapear">Mapear caminhando</button>
+      <button id="bPronto">Usar mapa pronto</button>
+    </div>
+    <p class="ajuda">O mapa pronto tem só o contorno do talhão, sem obstáculos marcados. Quem desvia é o radar.</p>
+
+
+    <h3>Modo do aplicativo</h3>
+    <div class="seg" id="segModo">
+      <button data-v="facil" aria-pressed="true">Modo fácil</button>
+      <button data-v="padrao" aria-pressed="false">Modo padrão</button>
+    </div>
+    <p class="ajuda" id="ajModo"></p>
+
+    <h3>Configurações de tarefa</h3>
+    <div class="campo"><label for="pAlt">Altura acima das culturas</label><output id="oAlt"></output>
+      <input type="range" id="pAlt" min="1.5" max="15" step=".5" value="3"></div>
+    <div class="campo"><label for="pVel">Velocidade</label><output id="oVel"></output>
+      <input type="range" id="pVel" min="1" max="10" step=".5" value="7"></div>
+    <div class="campo"><label for="pFai">Espaçamento de rota</label><output id="oFai"></output>
+      <input type="range" id="pFai" min="3" max="12" step=".5" value="7.5"></div>
+    <canvas id="cFaixa" width="1000" height="150" aria-label="Faixas de aplicação lado a lado"></canvas>
+    <p class="ajuda" id="ajFaixa"></p>
+    <div class="campo"><label for="pVaz">Volume de pulverização</label><output id="oVaz"></output>
+      <input type="range" id="pVaz" min="5" max="40" step="1" value="15"></div>
+    <div class="campo"><label for="pGota">Tamanho da gota</label><output id="oGota"></output>
+      <input type="range" id="pGota" min="50" max="500" step="10" value="300"></div>
+    <div class="campo"><label for="pRth">Altitude RTH</label><output id="oRth"></output>
+      <input type="range" id="pRth" min="5" max="50" step="1" value="20"></div>
+
+    <h3>Configurações de detecção</h3>
+    <div class="seg" id="segTerreno">
+      <button data-v="planicie" aria-pressed="true">Planícies</button>
+      <button data-v="montanha" aria-pressed="false">Montanhas e pomares</button>
+      <button data-v="agua" aria-pressed="false">Acima da água</button>
+    </div>
+    <p class="ajuda" id="ajTerreno"></p>
+    <div class="chave"><div class="g"><b>Desvio de obstáculos</b>
+      <small>Com ele ligado, a velocidade fica limitada a 10 m/s e a altura acima das culturas entre 2,5 e 8 m.</small></div>
+      <button class="tog" id="tDesvio" aria-pressed="true" aria-label="Desvio de obstáculos"></button></div>
+    <div class="chave"><div class="g"><b>Estabilização da altitude</b>
+      <small>Acompanha o terreno pelo radar. Desligada, a altura é contada a partir do ponto de decolagem.</small></div>
+      <button class="tog" id="tEstab" aria-pressed="true" aria-label="Estabilização da altitude"></button></div>
+
+    <button id="iniciar">Iniciar operação</button>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/loaders/OBJLoader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/loaders/ColladaLoader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/fflate@0.6.9/umd/index.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/loaders/FBXLoader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/controls/OrbitControls.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/loaders/GLTFLoader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/utils/BufferGeometryUtils.js"></script>
+<script>
+/* 24/11/2026 (montar42): no celular (iPhone, iPad, Android) a pagina passava do limite de memoria logo depois de o campo
+   aparecer e o aparelho a derrubava: tela branca, recarrega e cai no Entrar (video dele, T25 no navegador do Instagram).
+   As texturas dos modelos 3D vinham inteiras (2048 x 2048: o T25 sozinho tinha 67 MB, ~250 MB no total). No celular:
+   1) toda foto que vira textura e reduzida para no maximo ~1 milhao de pontos (2048x2048 -> 1024x1024; o ceu 4096x1024 ->
+      2048x512) e a original e liberada. Desenhos feitos pelo jogo (canvas, como a pintura da faixa) nao sao mexidos.
+   2) a primeira vez comeca na qualidade "baixa" do desempenho.js (sem sombra, menos pontos na tela); ele ainda desce sozinho.
+   No computador nada muda. */
+(function () {
+  var ua = navigator.userAgent || "";
+  var movel = /iPhone|iPad|iPod|Android/i.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
+  if (!movel || !window.THREE || !THREE.Source) return;
+  window.XG_MOVEL = { reduzidas: 0, antesMB: 0, depoisMB: 0 };
+  try { if (!localStorage.getItem("tpd_qualidade")) localStorage.setItem("tpd_qualidade", "baixa"); } catch (e) { /* sem armazenamento */ }
+  var LIMITE = 1024 * 1024, CHAVE = "__xgDados", feitas = typeof WeakMap === "function" ? new WeakMap() : null;
+  function reduzir(d) {
+    if (d && typeof d === "object" && feitas && feitas.has(d)) return feitas.get(d);   // a mesma foto em duas texturas
+    var foto = (typeof HTMLImageElement !== "undefined" && d instanceof HTMLImageElement && d.complete && d.naturalWidth) ||
+               (typeof ImageBitmap !== "undefined" && d instanceof ImageBitmap);
+    if (!foto) return d;
+    var w = d.naturalWidth || d.width, h = d.naturalHeight || d.height;
+    if (!w || !h || w * h <= LIMITE) return d;
+    var k = Math.sqrt(LIMITE / (w * h)), nw = Math.max(1, Math.floor(w * k)), nh = Math.max(1, Math.floor(h * k));
+    try {
+      var c = document.createElement("canvas"); c.width = nw; c.height = nh;
+      c.getContext("2d").drawImage(d, 0, 0, nw, nh);
+      if (feitas) feitas.set(d, c);
+      if (d.close) d.close();
+      XG_MOVEL.reduzidas++; XG_MOVEL.antesMB += w * h * 4 / 1e6; XG_MOVEL.depoisMB += nw * nh * 4 / 1e6;
+      return c;
+    } catch (e) { return d; }
+  }
+  Object.defineProperty(THREE.Source.prototype, "data", {
+    configurable: true,
+    get: function () { return this[CHAVE]; },
+    set: function (v) { this[CHAVE] = reduzir(v); }
+  });
+})();
+</script>
+<script src="../js/campo/apoiadores.js?v=a6f66862226d"></script>
+<script>
+"use strict";
+const $=id=>document.getElementById(id);
+const nf=(v,d)=>v.toLocaleString("pt-BR",{minimumFractionDigits:d,maximumFractionDigits:d});
+const trava=(v,a,b)=>v<a?a:v>b?b:v;
+const mmss=s=>{s=Math.max(0,Math.round(s));return Math.floor(s/60)+":"+String(s%60).padStart(2,"0")};
+
+/* Números do manual do Agras T50 (Especificações e Aviônica) */
+const T50={tanque:40,vazaoMaxLmin:16,autonomiaVazioMin:16.5,autonomiaCheioMin:7,
+  radarAlcance:50,distSeguranca:2.5,raioHelice:.69,velMaxDesvio:10,altMinDesvio:2.5,altMaxDesvio:8,
+  velMax:10,alcanceFio:4,frenagem:4,   /* T50: 36 km/h no maximo */
+  /* regras de campo ditas pelo Eduardo (06/10/2026): depois de passar por cima
+     de um obstáculo a aeronave só volta à altura de trabalho 6 m além dele;
+     árvore seca (sem folha) só é vista pelo radar abaixo de 15 km/h */
+  distPosObstaculo:6,velArvoreSeca:15/3.6};
+/* velocidade horizontal: na rota é V.v; no voo manual (manual.js) é mvx/mvz */
+const velHorizontal=()=>V.estado==="manual"?Math.hypot(V.mvx||0,V.mvz||0):V.v;
+
+/* ===================================================================
+   RENDER E LUZ
+   =================================================================== */
+const render=new THREE.WebGLRenderer({antialias:true,powerPreference:"high-performance"});
+render.setPixelRatio(Math.min(2,devicePixelRatio));
+render.setSize(innerWidth,innerHeight);
+render.shadowMap.enabled=true;render.shadowMap.type=THREE.PCFSoftShadowMap;
+render.outputEncoding=THREE.sRGBEncoding;
+render.toneMapping=THREE.ACESFilmicToneMapping;render.toneMappingExposure=.85;
+document.body.prepend(render.domElement);
+
+const cena=new THREE.Scene();
+cena.fog=new THREE.Fog("#c6d4dc",220,1050);
+const cam=new THREE.PerspectiveCamera(55,innerWidth/innerHeight,.1,3000);
+const orb=new THREE.OrbitControls(cam,render.domElement);
+orb.enableDamping=true;orb.maxPolarAngle=Math.PI*.495;
+/* 19/11/2026 (Eduardo: "quando a camera ta no drone deixa possivel fazer orbita e tirar e dar zoom"): na vista Drone a câmera continua
+   seguindo a aeronave, mas no ângulo e na distância que o aluno deixar: arrastar gira em volta dela, a rodinha (ou a pinça no celular) dá zoom.
+   az = ângulo em volta do drone contado de "atrás dele", el = elevação, dist = distância. Sem mexer é a posição de sempre (11 m atrás, 3,6 m de
+   lado, 4,2 m acima); apertar "Drone" de novo volta a ela. Quem gira e dá zoom são os OrbitControls; aqui só se lê o resultado. */
+const XG_ORB0={az:Math.atan2(3.6,11),el:Math.atan2(3.7,Math.hypot(11,3.6)),dist:Math.hypot(11,3.6,3.7)};
+const xgOrb={az:XG_ORB0.az,el:XG_ORB0.el,dist:XG_ORB0.dist,mexendo:false,ate:0};   /* ate: depois de soltar, a câmera ainda desliza um pouco (amortecimento); até lá ela continua sendo do aluno */
+function xgOrbLer(){
+  const ox=cam.position.x-orb.target.x,oy=cam.position.y-orb.target.y,oz=cam.position.z-orb.target.z,h=Math.hypot(ox,oz),tx=-Math.cos(V.yaw),tz=Math.sin(V.yaw);
+  xgOrb.dist=Math.min(120,Math.max(2.5,Math.hypot(h,oy)));xgOrb.el=Math.min(1.5,Math.max(.03,Math.atan2(oy,h)));
+  if(h>.05)xgOrb.az=Math.atan2(ox*tz-oz*tx,ox*tx+oz*tz);
+}
+orb.addEventListener("start",()=>{if(vista==="drone"&&seguir&&!modoMapa&&!telaInicial)xgOrb.mexendo=true});
+orb.addEventListener("change",()=>{if(xgOrb.mexendo||performance.now()<xgOrb.ate)xgOrbLer()});
+orb.addEventListener("end",()=>{if(xgOrb.mexendo){xgOrbLer();xgOrb.mexendo=false;xgOrb.ate=performance.now()+900}});
+
+(function ceu(){
+  const c=document.createElement("canvas");c.width=4;c.height=256;
+  const g=c.getContext("2d"),gr=g.createLinearGradient(0,0,0,256);
+  gr.addColorStop(0,"#3b78ae");gr.addColorStop(.55,"#9ac0d9");gr.addColorStop(.72,"#d3dfe4");gr.addColorStop(1,"#d3dfe4");
+  g.fillStyle=gr;g.fillRect(0,0,4,256);
+  const t=new THREE.CanvasTexture(c);t.encoding=THREE.sRGBEncoding;
+  cena.add(new THREE.Mesh(new THREE.SphereGeometry(1700,32,16),new THREE.MeshBasicMaterial({map:t,side:THREE.BackSide,fog:false})));
+})();
+cena.add(new THREE.HemisphereLight("#cfe3f2","#55462f",.6));
+const sol=new THREE.DirectionalLight("#fff1dc",1.9);
+sol.castShadow=true;sol.shadow.mapSize.set(2048,2048);
+Object.assign(sol.shadow.camera,{left:-30,right:30,top:30,bottom:-30,near:1,far:300});
+sol.shadow.bias=-.0004;
+cena.add(sol,sol.target);
+
+/* ===================================================================
+   RUÍDO PARA O RELEVO
+   =================================================================== */
+const perm=(()=>{let s=1337;const r=()=>(s=(s*1664525+1013904223)>>>0)/4294967296;
+  const p=[...Array(256).keys()];for(let i=255;i>0;i--){const j=Math.floor(r()*(i+1));[p[i],p[j]]=[p[j],p[i]]}
+  const q=new Uint8Array(512);for(let i=0;i<512;i++)q[i]=p[i&255];return q})();
+function ruido(x,y){
+  const X=Math.floor(x)&255,Y=Math.floor(y)&255;x-=Math.floor(x);y-=Math.floor(y);
+  const f=t=>t*t*t*(t*(t*6-15)+10),u=f(x),v=f(y);
+  const gr=(h,a,b)=>{const g=h&7;return (g<4?a:b)*((g&1)?-1:1)+(g<4?b:a)*((g&2)?-.5:.5)};
+  const a=perm[X]+Y,b=perm[X+1]+Y,l=(t,p,q)=>p+t*(q-p);
+  return l(v,l(u,gr(perm[a],x,y),gr(perm[b],x-1,y)),l(u,gr(perm[a+1],x,y-1),gr(perm[b+1],x-1,y-1)));
+}
+const fbm=(x,y)=>ruido(x,y)+.5*ruido(x*2.1+17,y*2.1+9)+.25*ruido(x*4.3+41,y*4.3+3);
+const suave=(a,b,t)=>{t=trava((t-a)/(b-a),0,1);return t*t*(3-2*t)};
+
+/* ===================================================================
+   CAMPOS (CENÁRIOS)
+   =================================================================== */
+const TALHAO={x0:-90,z0:-200,larg:180,prof:220};
+const BASE={x:-4,z:28};
+
+function linhaDePostes(ax,az,bx,bz,vao){
+  const n=Math.max(1,Math.round(Math.hypot(bx-ax,bz-az)/vao)),pts=[];
+  for(let i=0;i<=n;i++)pts.push([ax+(bx-ax)*i/n,az+(bz-az)*i/n]);return pts;
+}
+
+const CENARIOS=[
+  {id:"coxilha",nome:"Coxilha com rede de baixa",nivel:["Fácil","f"],
+   desc:"4 ha em relevo suave. Uma rede de baixa tensão cruza o talhão na diagonal e há uma árvore isolada e uma árvore seca no meio das linhas.",
+   terrenoSugerido:"planicie",
+   altura:(x,z)=>5*Math.sin(x/95+.6)*Math.cos(z/120)+2.6*fbm(x/75,z/75),
+   montar(){
+     redeEletrica(linhaDePostes(-150,-6,160,-178,40),9.5,.9,"baixa tensão");
+     arvores([{x:30,z:-95,alt:12,copa:4.6}],"a árvore isolada");
+     /* árvore seca: o radar só a vê abaixo de 15 km/h (T50.velArvoreSeca) */
+     arvores([{x:-45,z:-150,alt:9,copa:3.2,seca:true}],"a árvore seca");
+     const fila=[];for(let z=-215;z<45;z+=9)fila.push({x:-110+Math.sin(z)*2,z,alt:10+Math.abs((z*7)%5),copa:3.6});
+     arvores(fila,"a fileira de árvores");
+     palmeiras([{x:24,z:46,h:8},{x:30,z:40,h:9.5}]);
+   }},
+  {id:"baixada",nome:"Baixada do açude",nivel:["Médio","m"],
+   desc:"O talhão desce até um açude. Capão de mata invadindo a lateral, eucaliptos no fim das linhas e uma torre de internet dentro da área.",
+   terrenoSugerido:"planicie",
+   altura:(x,z)=>{const d=Math.hypot(x-140,z+72);return 4.5-8.5*Math.exp(-d*d/(2*72*72))+1.8*fbm(x/60,z/60)},
+   montar(){
+     acude(140,-72,46);
+     const capao=[];let s=11;const r=()=>(s=(s*1664525+1013904223)>>>0)/4294967296;
+     for(let i=0;i<34;i++){const a=r()*6.283,d=Math.sqrt(r())*27;capao.push({x:-106+Math.cos(a)*d,z:-140+Math.sin(a)*d,alt:9+r()*8,copa:3.2+r()*2})}
+     arvores(capao,"o capão de mata");
+     const euc=[];for(let x=-92;x<=92;x+=6)euc.push({x,z:-207,alt:24+Math.abs((x*13)%4),copa:3.3,eucalipto:true});
+     arvores(euc,"a bordadura de eucalipto");
+     mastro(70,8,22,"a torre de internet");
+     predio(-45,56,9,7,3,.3,"#d9d2c3","#8a4b35","a casa");
+     predio(-82,60,20,12,5.5,.1,"#b9bec2","#6f7a82","o galpão");
+     palmeiras([{x:-22,z:54,h:9},{x:-62,z:48,h:8}]);
+     bombaCombustivel(-68,50,Math.PI/2);
+     bananeiras([{x:-33,z:47,h:4.2},{x:-37,z:44,h:3.6},{x:-30,z:43,h:3.9},{x:-54,z:67,h:4.4},{x:-58,z:70,h:3.4},{x:-33,z:66,h:4}]);
+   }},
+  {id:"encosta",nome:"Encosta com rede na coxilha",nivel:["Difícil","d"],
+   desc:"Declive de 16° com uma coxilha no meio do talhão. A rede de média tensão passa só 3 m acima do chão bem em cima da coxilha.",
+   terrenoSugerido:"montanha",
+   altura:(x,z)=>{const sobe=.29*Math.max(0,20-z)*suave(-10,25,20-z);
+     const crista=6.5*Math.exp(-x*x/(2*28*28))*suave(15,-15,z);
+     return sobe+crista+1.1*fbm(x/55,z/55)},
+   montar(){
+     redeEletrica([[-190,-80],[-62,-80],[62,-80],[190,-80]],11,1.5,"média tensão");
+     silo(40,-232);
+     palmeiras([{x:-10,z:-228,h:8.5},{x:-18,z:-246,h:7.5}]);
+     bombaCombustivel(26,-222,0);
+     predio(12,-238,16,10,5,.1,"#b9bec2","#6f7a82","o galpão");
+     const bordas=[];for(let z=-210;z<35;z+=8)bordas.push({x:112+Math.cos(z)*2,z,alt:11+Math.abs((z*5)%4),copa:3.8});
+     arvores(bordas,"a fileira de árvores");
+   }},
+];
+let cen=CENARIOS[0];
+const alt=(x,z)=>cen.altura(x,z);
+
+/* ===================================================================
+   MUNDO
+   =================================================================== */
+const mundo=new THREE.Group();cena.add(mundo);
+const acudes=[];
+const colisores=[];
+
+function texturaSolo(){
+  const c=document.createElement("canvas");c.width=c.height=1024;
+  const g=c.getContext("2d");let s=91;const r=()=>(s=(s*1664525+1013904223)>>>0)/4294967296;
+  g.fillStyle="#6a5a45";g.fillRect(0,0,1024,1024);
+  for(let i=0;i<260;i++){g.globalAlpha=.07+r()*.12;g.fillStyle=r()>.5?"#7d6c55":"#4e412f";
+    g.beginPath();g.ellipse(r()*1024,r()*1024,30+r()*140,20+r()*90,r()*3,0,7);g.fill()}
+  for(let x=0;x<1024;x+=25.6){g.globalAlpha=.16;g.fillStyle="#3a2f22";g.fillRect(x,0,4,1024);
+    g.globalAlpha=.08;g.fillStyle="#a8987a";g.fillRect(x+6,0,2,1024)}
+  for(let i=0;i<9000;i++){g.globalAlpha=.10+r()*.35;g.fillStyle=r()>.5?"#2f261b":"#9d8d70";
+    const x=r()*1024,y=r()*1024,rr=.6+r()*2.4;g.fillRect(x,y,rr,rr*(.5+r()))}
+  g.globalAlpha=1;
+  const t=new THREE.CanvasTexture(c);t.wrapS=t.wrapT=THREE.RepeatWrapping;t.encoding=THREE.sRGBEncoding;
+  t.anisotropy=render.capabilities.getMaxAnisotropy();return t;
+}
+const solo=texturaSolo();
+const TAM=1400,SEG=440;solo.repeat.set(TAM/20,TAM/20);
+
+/* a pintura cobre o talhão e 30 m em volta: um mapa mal feito aplica fora */
+const PINT={x0:TALHAO.x0-30,z0:TALHAO.z0-30,larg:TALHAO.larg+60,prof:TALHAO.prof+60};
+/* quantas passadas molharam cada célula (4 por metro). A textura do chão molhado sai dessa contagem:
+   1 passada = molhado, 2 ou mais = emenda sobreposta (mais escura), 0 = chão seco (falha entre faixas) */
+const COB_PX=4,COB_W=PINT.larg*COB_PX,COB_H=PINT.prof*COB_PX;
+const cobN=new Uint8Array(COB_W*COB_H),cobPasse=new Int32Array(COB_W*COB_H);
+const pintDados=new Uint8Array(COB_W*COB_H*4);
+const pintTx=new THREE.DataTexture(pintDados,COB_W,COB_H,THREE.RGBAFormat);
+pintTx.encoding=THREE.sRGBEncoding;pintTx.magFilter=THREE.LinearFilter;pintTx.minFilter=THREE.LinearFilter;pintTx.generateMipmaps=false;pintTx.needsUpdate=true;
+let pintMudou=false;
+function limparCobertura(){cobN.fill(0);cobPasse.fill(-1);pintDados.fill(0);pintTx.needsUpdate=true}
+limparCobertura();
+function pintarFaixa(x1,z1,x2,z2,larg,passe){
+  const dx=x2-x1,dz=z2-z1,l=Math.hypot(dx,dz)||1,nx=-dz/l,nz=dx/l;
+  const n=Math.ceil(larg*COB_PX*2),m=Math.max(1,Math.ceil(l*COB_PX*2));
+  for(let j=0;j<=m;j++){
+    const px=x1+dx*j/m,pz=z1+dz*j/m;
+    for(let k=0;k<=n;k++){
+      const s=-larg/2+larg*k/n;
+      const cx=Math.floor((px+nx*s-PINT.x0)*COB_PX),cz=Math.floor((pz+nz*s-PINT.z0)*COB_PX);
+      if(cx<0||cz<0||cx>=COB_W||cz>=COB_H)continue;
+      const c=cz*COB_W+cx;
+      if(cobPasse[c]===passe)continue;
+      cobPasse[c]=passe;if(cobN[c]<255)cobN[c]++;
+      /* a geometria do chão tem v=1 no z menor: a linha da textura é invertida */
+      const t=((COB_H-1-cz)*COB_W+cx)*4;
+      pintDados[t]=40;pintDados[t+1]=30;pintDados[t+2]=19;pintDados[t+3]=cobN[c]>1?205:130;
+      pintMudou=true;
+    }
+  }
+  if(pintMudou){pintTx.needsUpdate=true;pintMudou=false}
+}
+
+function limparMundo(){
+  for(const o of [...mundo.children]){
+    mundo.remove(o);
+    o.traverse(x=>{if(x.geometry)x.geometry.dispose();if(x.material&&x.material.dispose)x.material.dispose()});
+  }
+  colisores.length=0;
+}
+
+function construirCenario(c){
+  cen=c;limparMundo();
+  limparCobertura();
+  const T=TALHAO;
+
+  const g=new THREE.PlaneGeometry(TAM,TAM,SEG,SEG);g.rotateX(-Math.PI/2);g.translate(0,0,-80);
+  const pos=g.attributes.position,cor=new Float32Array(pos.count*3);
+  for(let i=0;i<pos.count;i++){
+    const x=pos.getX(i),z=pos.getZ(i);pos.setY(i,alt(x,z));
+    const dx=Math.max(T.x0-x,0,x-(T.x0+T.larg)),dz=Math.max(T.z0-z,0,z-(T.z0+T.prof));
+    const f=Math.min(1,Math.hypot(dx,dz)/7);
+    cor[i*3]=1-f*.46;cor[i*3+1]=1+f*.12;cor[i*3+2]=1-f*.6;
+  }
+  g.setAttribute("color",new THREE.BufferAttribute(cor,3));g.computeVertexNormals();
+  const chao=new THREE.Mesh(g,new THREE.MeshStandardMaterial({map:solo,vertexColors:true,roughness:.97}));
+  chao.receiveShadow=true;mundo.add(chao);
+
+  const gm=new THREE.PlaneGeometry(PINT.larg,PINT.prof,PINT.larg/2,PINT.prof/2);gm.rotateX(-Math.PI/2);
+  gm.translate(PINT.x0+PINT.larg/2,0,PINT.z0+PINT.prof/2);
+  const pm=gm.attributes.position;for(let i=0;i<pm.count;i++)pm.setY(i,alt(pm.getX(i),pm.getZ(i))+.07);
+  gm.computeVertexNormals();
+  mundo.add(new THREE.Mesh(gm,new THREE.MeshStandardMaterial({map:pintTx,transparent:true,opacity:1,roughness:.45,
+    depthWrite:false,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-2})));
+
+  /* marcos de madeira nos cantos do talhão: referência para quem vai mapear caminhando */
+  {const madeira=new THREE.MeshStandardMaterial({color:"#6b5238",roughness:1}),tinta=new THREE.MeshStandardMaterial({color:"#e9e4d8",roughness:.8});
+   for(const [x,z] of [[T.x0,T.z0],[T.x0+T.larg,T.z0],[T.x0+T.larg,T.z0+T.prof],[T.x0,T.z0+T.prof]]){
+     const g=new THREE.Group(),y=alt(x,z);
+     const m=new THREE.Mesh(new THREE.CylinderGeometry(.07,.09,1.3,7),madeira);m.position.y=.65;
+     const c=new THREE.Mesh(new THREE.CylinderGeometry(.072,.072,.22,7),tinta);c.position.y=1.2;
+     g.add(m,c);g.position.set(x,y,z);g.traverse(o=>{if(o.isMesh)o.castShadow=true});mundo.add(g)}}
+
+  {const geo=new THREE.ConeGeometry(.011,.19,3,1,true);geo.translate(0,.095,0);
+   const N=120000,m=new THREE.InstancedMesh(geo,new THREE.MeshStandardMaterial({color:"#8a7a52",roughness:1,side:THREE.DoubleSide}),N);
+   const o=new THREE.Object3D(),cc=new THREE.Color();let s=5;const r=()=>(s=(s*1664525+1013904223)>>>0)/4294967296;
+   for(let i=0;i<N;i++){
+     const x=T.x0-2+r()*(T.larg+4),z=T.z0-2+r()*(T.prof+4),xx=Math.round(x/.5)*.5+(r()-.5)*.12;
+     o.position.set(xx,alt(xx,z),z);o.rotation.set((r()-.5)*.5,r()*6,(r()-.5)*.5);
+     const e=.55+r()*.8;o.scale.set(e,e*(.7+r()*.6),e);o.updateMatrix();m.setMatrixAt(i,o.matrix);
+     cc.setHSL(.10+r()*.03,.28+r()*.14,.26+r()*.16);m.setColorAt(i,cc);
+   }
+   m.receiveShadow=true;mundo.add(m);}
+
+  {const grupo=new THREE.Group();mundo.add(grupo);
+   Promise.all([carregarGlb(GLB.verde),carregarGlb(GLB.outono),carregarGlb(GLB.seca)]).then(([verde,outono,seca])=>{
+     const h0=verde.userData.caixa.max.y,v=[],o=[],sc=[];let s=77;const r=()=>(s=(s*1664525+1013904223)>>>0)/4294967296;
+     for(let i=0;i<520;i++){const a=r()*6.283,R=230+r()*420,x=Math.cos(a)*R,z=Math.sin(a)*R-80,h=7+r()*11,e=h/h0;
+       const k=r(),m=matriz(x,alt(x,z)-.2,z,r()*6.28,e*(1+r()*.5),e);(k<.04?o:k<.07?sc:v).push(m)}
+     instanciar(verde,v,grupo,false);instanciar(outono,o,grupo,false);instanciar(seca,sc,grupo,false);
+   }).catch(e=>console.warn("mata do horizonte",e));}
+  tufosDeCapim();
+
+  operador();
+  camioneta(BASE.x+10,BASE.z+8,0);
+  acudes.length=0;
+  c.montar();
+  fundoMapa=null;desenharMapa3D();
+}
+
+/* ===================================================================
+   OBJETOS 3D: ÁRVORES E PALMEIRA (Quaternius, CC0), BOMBA, CAMIONETE
+   =================================================================== */
+const GLB={verde:"assets/web/natureza/quaternius_cc0-common-tree-837.glb",outono:"assets/web/natureza/quaternius_cc0-common-tree-841.glb",
+  seca:"assets/web/natureza/quaternius_cc0-common-tree-846.glb",palmeira:"assets/web/natureza/quaternius_cc0-palm-tree-1203.glb",
+  bomba:"assets/web/natureza/jerryblessed-fuel-5054.glb"};
+const cacheGlb={};
+function carregarGlb(url){
+  return cacheGlb[url]||(cacheGlb[url]=new Promise((ok,erro)=>new THREE.GLTFLoader().load(url,g=>{
+    g.scene.updateMatrixWorld(true);
+    const b=new THREE.Box3().setFromObject(g.scene);g.scene.userData.caixa=b;ok(g.scene);
+  },undefined,erro)));
+}
+/* uma InstancedMesh por pedaço do modelo (tronco, copa clara, copa escura) */
+function instanciar(modelo,matrizes,destino,sombra){
+  if(!matrizes.length)return;
+  const m=new THREE.Matrix4();
+  modelo.traverse(p=>{
+    if(!p.isMesh)return;
+    const im=new THREE.InstancedMesh(p.geometry,p.material,matrizes.length);
+    matrizes.forEach((t,i)=>{m.multiplyMatrices(t,p.matrixWorld);im.setMatrixAt(i,m)});
+    im.castShadow=sombra;im.receiveShadow=true;destino.add(im);
+  });
+}
+const matriz=(x,y,z,giro,sx,sy,sz)=>new THREE.Matrix4().compose(new THREE.Vector3(x,y,z),
+  new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,1,0),giro),new THREE.Vector3(sx,sy,sz===undefined?sx:sz));
+
+function camioneta(x,z,giro){
+  /* camionete cabine dupla genérica, feita aqui a partir das proporções de uma média do segmento:
+     5,3 m de comprimento, 1,85 m de largura, 3,08 m entre eixos */
+  const g=new THREE.Group(),y=alt(x,z);
+  const tinta=new THREE.MeshStandardMaterial({color:"#e4e6e3",metalness:.45,roughness:.32});
+  const preto=new THREE.MeshStandardMaterial({color:"#1b1d1f",roughness:.75});
+  const vidro=new THREE.MeshStandardMaterial({color:"#1a2229",metalness:.3,roughness:.06,transparent:true,opacity:.92});
+  const cromo=new THREE.MeshStandardMaterial({color:"#c9ced2",metalness:1,roughness:.2});
+  const pneu=new THREE.MeshStandardMaterial({color:"#141414",roughness:.95});
+  const LARG=1.8,EF=1.45,ET=-1.63,RA=.48,YR=.39;
+  const extrudar=(forma,largura,mat)=>{
+    const geo=new THREE.ExtrudeGeometry(forma,{depth:largura,bevelEnabled:true,bevelThickness:.035,bevelSize:.035,bevelSegments:2,curveSegments:10});
+    geo.translate(0,0,-largura/2);return new THREE.Mesh(geo,mat);
+  };
+  /* lateral da cabine e do capô, com o arco da roda dianteira */
+  const corpo=new THREE.Shape();
+  corpo.moveTo(-.98,.47);corpo.lineTo(-.98,1.2);corpo.lineTo(.55,1.2);corpo.lineTo(1.2,1.13);corpo.lineTo(2.58,1.04);corpo.lineTo(2.66,.95);corpo.lineTo(2.62,.47);
+  {const a=Math.asin((.47-YR)/RA);corpo.lineTo(EF+RA*Math.cos(a),.47);corpo.absarc(EF,YR,RA,a,Math.PI-a,false);}
+  corpo.lineTo(-.98,.47);
+  g.add(extrudar(corpo,LARG,tinta));
+  /* caçamba: parte de baixo com o arco da roda traseira, paredes e tampa */
+  const cac=new THREE.Shape();
+  cac.moveTo(-2.64,.5);cac.lineTo(-2.64,1.24);cac.lineTo(-1.0,1.24);cac.lineTo(-1.0,.47);
+  {const a=Math.asin((.47-YR)/RA);cac.lineTo(ET+RA*Math.cos(a),.47);cac.absarc(ET,YR,RA,a,Math.PI-a,false);}
+  cac.lineTo(-2.64,.5);
+  for(const lado of [-1,1]){const p=extrudar(cac,.07,tinta);p.position.z=lado*(LARG/2-.035);g.add(p)}
+  {const fundo=new THREE.Mesh(new THREE.BoxGeometry(1.6,.06,LARG-.12),preto);fundo.position.set(-1.82,.98,0);g.add(fundo);
+   const base=new THREE.Mesh(new THREE.BoxGeometry(1.64,.4,1.2),preto);base.position.set(-1.82,.72,0);g.add(base);
+   const tampa=new THREE.Mesh(new THREE.BoxGeometry(.07,.76,LARG),tinta);tampa.position.set(-2.62,.88,0);g.add(tampa);
+   const frente=new THREE.Mesh(new THREE.BoxGeometry(.07,.3,LARG-.1),tinta);frente.position.set(-1.02,1.1,0);g.add(frente);}
+  /* cabine: vidros, colunas e teto */
+  const cab=new THREE.Shape();
+  cab.moveTo(-.95,1.2);cab.lineTo(-.88,1.8);cab.lineTo(.02,1.84);cab.lineTo(.55,1.22);cab.lineTo(-.95,1.2);
+  g.add(extrudar(cab,1.56,vidro));
+  {const teto=new THREE.Mesh(new THREE.BoxGeometry(.98,.05,1.62),tinta);teto.position.set(-.44,1.85,0);g.add(teto);
+   for(const zc of [-.79,.79]){
+     const colB=new THREE.Mesh(new THREE.BoxGeometry(.09,.62,.04),preto);colB.position.set(-.2,1.52,zc);g.add(colB);
+     const colC=new THREE.Mesh(new THREE.BoxGeometry(.1,.62,.04),tinta);colC.position.set(-.9,1.51,zc);colC.rotation.z=-.1;g.add(colC);
+     const esp=new THREE.Mesh(new THREE.BoxGeometry(.22,.14,.12),preto);esp.position.set(.5,1.28,zc*1.2);g.add(esp);
+     const estribo=new THREE.Mesh(new THREE.BoxGeometry(1.7,.05,.16),preto);estribo.position.set(-.2,.42,zc*1.08);g.add(estribo);
+     for(const xm of [.1,-.62]){const maca=new THREE.Mesh(new THREE.BoxGeometry(.16,.03,.02),preto);maca.position.set(xm,1.08,zc*1.15);g.add(maca)}
+   }}
+  /* frente: grade, faróis, para-choques */
+  {const grade=new THREE.Mesh(new THREE.BoxGeometry(.05,.3,1.1),preto);grade.position.set(2.68,.84,0);g.add(grade);
+   for(let k=0;k<4;k++){const f=new THREE.Mesh(new THREE.BoxGeometry(.02,.02,1.08),cromo);f.position.set(2.705,.73+k*.075,0);g.add(f)}
+   for(const zc of [-.66,.66]){
+     const farol=new THREE.Mesh(new THREE.BoxGeometry(.05,.13,.34),new THREE.MeshStandardMaterial({color:"#e8f0f5",emissive:"#9fb3c2",emissiveIntensity:.35,metalness:.5,roughness:.1}));
+     farol.position.set(2.62,.97,zc);g.add(farol);
+     const lanterna=new THREE.Mesh(new THREE.BoxGeometry(.05,.34,.12),new THREE.MeshStandardMaterial({color:"#8a0f10",emissive:"#3a0406",roughness:.3}));
+     lanterna.position.set(-2.67,1.02,zc*1.25);g.add(lanterna);
+   }
+   const pcD=new THREE.Mesh(new THREE.BoxGeometry(.22,.24,LARG+.04),preto);pcD.position.set(2.62,.5,0);g.add(pcD);
+   const pcT=new THREE.Mesh(new THREE.BoxGeometry(.2,.16,LARG+.02),cromo);pcT.position.set(-2.66,.5,0);g.add(pcT);}
+  /* rodas e alargadores */
+  for(const xr of [EF,ET])for(const zc of [-1,1]){
+    const r=new THREE.Group();r.position.set(xr,YR,zc*(LARG/2-.12));
+    const t=new THREE.Mesh(new THREE.CylinderGeometry(.39,.39,.27,22),pneu);t.rotation.x=Math.PI/2;
+    const aro=new THREE.Mesh(new THREE.CylinderGeometry(.23,.23,.28,14),cromo);aro.rotation.x=Math.PI/2;
+    const cubo=new THREE.Mesh(new THREE.CylinderGeometry(.07,.07,.29,8),preto);cubo.rotation.x=Math.PI/2;
+    r.add(t,aro,cubo);g.add(r);
+    const alarg=new THREE.Mesh(new THREE.CylinderGeometry(.5,.5,.14,20,1,true,-Math.PI/2*1.1,Math.PI*1.1),preto);
+    alarg.rotation.set(Math.PI/2,0,Math.PI/2);alarg.position.set(xr,YR,zc*(LARG/2+.02));
+    alarg.material.side=THREE.DoubleSide;g.add(alarg);
+  }
+  /* na caçamba: caixa de 1000 L de calda e as baterias */
+  {const ibc=new THREE.Group();
+   const tanque=new THREE.Mesh(new THREE.BoxGeometry(1.1,.92,1.0),new THREE.MeshStandardMaterial({color:"#e9eef0",roughness:.5,transparent:true,opacity:.9}));
+   const agua=new THREE.Mesh(new THREE.BoxGeometry(1.06,.55,.96),new THREE.MeshStandardMaterial({color:"#9fc2c9",roughness:.3,transparent:true,opacity:.55}));agua.position.y=-.17;
+   const gaiola=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(1.14,.96,1.04,3,2,3)),new THREE.LineBasicMaterial({color:"#8b9195"}));
+   const palete=new THREE.Mesh(new THREE.BoxGeometry(1.14,.12,1.04),preto);palete.position.y=-.52;
+   ibc.add(tanque,agua,gaiola,palete);ibc.position.set(-1.95,1.6,-.25);ibc.userData.carga="ibc";g.add(ibc);
+   for(let k=0;k<2;k++){const bat=new THREE.Mesh(new THREE.BoxGeometry(.4,.28,.3),new THREE.MeshStandardMaterial({color:"#2a2d31",roughness:.6}));
+     bat.position.set(-1.25-k*.45,1.15,.55);bat.userData.carga="bateria"+k;g.add(bat)}}
+  g.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true}});
+  g.position.set(x,y,z);g.rotation.y=giro;mundo.add(g);
+  /* 13/10/2026 (pedido do Eduardo): camionete cabine simples RANZER (sem marca), modelo em .glb.
+     A de cima fica até o modelo chegar (e se ele não carregar). Frente do modelo = +Z, aqui = +X;
+     o modelo vai 12 cm para trás para a bola do engate (x = -2,80) ficar sob o bocal da carretinha da equipe.js. A caixa de 1000 L
+     e as baterias vão para dentro da caçamba nova (assoalho a 0,81 m, entre as caixas de roda). */
+  carregarGlb("../../assets/modelos/camionete_ranzer.glb").then(m=>{
+    const r=m.clone(true);r.rotation.y=Math.PI/2;r.position.x=-.12;
+    r.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true}});
+    for(const o of [...g.children]){
+      if(o.userData.carga==="ibc")o.position.set(-1.92,1.39,0);
+      else if(o.userData.carga==="bateria0")o.position.set(-.62,.95,.36);
+      else if(o.userData.carga==="bateria1")o.position.set(-1.07,.95,.36);
+      else g.remove(o);
+    }
+    g.add(r);
+    /* 17/10/2026: adesivo das empresas apoiadoras nos dois lados (js/campo/apoiadores.js) */
+    try{window.xgApoiadores&&xgApoiadores.camionete(r)}catch(e){console.warn("apoiadores:",e)}
+  }).catch(e=>console.warn("camionete RANZER não carregou, fica a feita no código:",e));
+  registrar({tipo:"caixa",x,z,sx:5.5,sz:2.1,rot:giro,y0:y,y1:y+2.45,nome:"a camionete",
+    dica:"A camionete de apoio fica perto do ponto de decolagem. Deixe a área de pouso livre e longe dela."});
+}
+
+function palmeiras(lista){
+  const grupo=new THREE.Group();mundo.add(grupo);
+  for(const p of lista)registrar({tipo:"cil",x:p.x,z:p.z,r:p.h*.33,y0:alt(p.x,p.z)+p.h*.6,y1:alt(p.x,p.z)+p.h,nome:"a palmeira",tronco:.22,
+    dica:"Palmeira perto da sede: as folhas abrem longe do tronco. Planeje a rota e a subida com folga."});
+  carregarGlb(GLB.palmeira).then(m=>{
+    const h0=m.userData.caixa.max.y;
+    instanciar(m,lista.map((p,i)=>matriz(p.x,alt(p.x,p.z)-.05,p.z,i*1.9,p.h/h0,p.h/h0)),grupo,true);
+  }).catch(e=>console.warn("palmeira não carregou",e));
+}
+function bombaCombustivel(x,z,giro){
+  const grupo=new THREE.Group();mundo.add(grupo);
+  registrar({tipo:"caixa",x,z,sx:1.6,sz:1.2,rot:giro,y0:alt(x,z),y1:alt(x,z)+2.2,nome:"a bomba de diesel",dica:"Bomba de diesel da sede. Fica fora da rota."});
+  carregarGlb(GLB.bomba).then(m=>{
+    const c=m.clone();c.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true}});
+    c.position.set(x,alt(x,z)-m.userData.caixa.min.y,z);c.rotation.y=giro;grupo.add(c);
+  }).catch(e=>console.warn("bomba não carregou",e));
+}
+
+/* capim em tufos na pastagem: perto da base e na volta do talhão */
+let texTufo=null;
+function tufosDeCapim(){
+  if(!texTufo){
+    const c=document.createElement("canvas");c.width=128;c.height=128;const g=c.getContext("2d");
+    let s=17;const r=()=>(s=(s*1664525+1013904223)>>>0)/4294967296;
+    for(let i=0;i<46;i++){
+      const x=10+r()*108,h=50+r()*72,curva=(r()-.5)*30;
+      g.strokeStyle="rgba(255,255,255,"+(.75+r()*.25)+")";g.lineWidth=2+r()*2.5;
+      g.beginPath();g.moveTo(x,128);g.quadraticCurveTo(x+curva*.4,128-h*.6,x+curva,128-h);g.stroke();
+    }
+    texTufo=new THREE.CanvasTexture(c);texTufo.encoding=THREE.sRGBEncoding;
+  }
+  const geo=new THREE.PlaneGeometry(.42,.26);geo.translate(0,.13,0);
+  /* quatro faces só da frente (em vez de DoubleSide, que inverte a normal atrás e deixa metade dos tufos preta) */
+  const faces=[0,Math.PI/2,Math.PI,Math.PI*1.5].map(a=>{const q=geo.clone();q.rotateY(a);return q});
+  const cruz=THREE.BufferGeometryUtils?THREE.BufferGeometryUtils.mergeBufferGeometries(faces):geo;
+  /* normal para cima: o tufo recebe a mesma luz do chão e não vira um cartão claro contra o sol */
+  {const nn=cruz.attributes.normal;for(let i=0;i<nn.count;i++)nn.setXYZ(i,0,1,0)}
+  const N=30000,T=TALHAO;
+  const mat=new THREE.MeshStandardMaterial({map:texTufo,alphaTest:.45,roughness:1});
+  const im=new THREE.InstancedMesh(cruz,mat,N);
+  const o=new THREE.Object3D(),cc=new THREE.Color();let s=29;const r=()=>(s=(s*1664525+1013904223)>>>0)/4294967296;
+  let n=0;
+  for(let tent=0;tent<N*3&&n<N;tent++){
+    let x,z;
+    if(r()<.45){const a=r()*6.283,d=Math.sqrt(r())*75;x=BASE.x+Math.cos(a)*d;z=BASE.z+10+Math.sin(a)*d}
+    else{const lado=Math.floor(r()*4),t=r(),fora=1.5+Math.pow(r(),1.6)*35;
+      if(lado===0){x=T.x0+t*T.larg;z=T.z0-fora}else if(lado===1){x=T.x0+t*T.larg;z=T.z0+T.prof+fora}
+      else if(lado===2){x=T.x0-fora;z=T.z0+t*T.prof}else{x=T.x0+T.larg+fora;z=T.z0+t*T.prof}}
+    if(x>T.x0-1&&x<T.x0+T.larg+1&&z>T.z0-1&&z<T.z0+T.prof+1)continue;
+    if(Math.hypot(x-BASE.x,z-BASE.z)<3.2)continue;
+    if(acudes.some(a=>Math.hypot(x-a.x,z-a.z)<a.r+1))continue;
+    const e=.55+r()*.75;
+    o.position.set(x,alt(x,z)-.03,z);o.rotation.set(0,r()*6.28,0);o.scale.set(e,e*(.7+r()*.8),e);o.updateMatrix();
+    im.setMatrixAt(n,o.matrix);cc.setHSL(.21+r()*.06,.38+r()*.18,.075+r()*.06);im.setColorAt(n,cc);n++;
+  }
+  im.count=n;im.receiveShadow=true;mundo.add(im);
+}
+
+/* nuvens */
+(function nuvens(){
+  const c=document.createElement("canvas");c.width=256;c.height=128;const g=c.getContext("2d");
+  let s=5;const r=()=>(s=(s*1664525+1013904223)>>>0)/4294967296;
+  for(let i=0;i<26;i++){const x=40+r()*176,y=50+r()*40,R=18+r()*30;
+    const gr=g.createRadialGradient(x,y,0,x,y,R);gr.addColorStop(0,"rgba(255,255,255,.55)");gr.addColorStop(1,"rgba(255,255,255,0)");
+    g.fillStyle=gr;g.beginPath();g.arc(x,y,R,0,7);g.fill()}
+  const tex=new THREE.CanvasTexture(c);tex.encoding=THREE.sRGBEncoding;
+  for(let i=0;i<18;i++){
+    const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:tex,fog:false,depthWrite:false,opacity:.75+r()*.25}));
+    const a=r()*6.283,d=900+r()*500;sp.position.set(Math.cos(a)*d,260+r()*220,Math.sin(a)*d-80);
+    const e=260+r()*260;sp.scale.set(e,e*.42,1);cena.add(sp);
+  }
+})();
+
+function registrar(c){
+  if(c.tipo==="cil"){c.cx=c.x;c.cz=c.z;c.raio=c.r}
+  else if(c.tipo==="caixa"){c.cx=c.x;c.cz=c.z;c.raio=Math.hypot(c.sx,c.sz)/2}
+  else{c.cx=(c.a.x+c.b.x)/2;c.cz=(c.a.z+c.b.z)/2;c.raio=c.a.distanceTo(c.b)/2+c.r}
+  colisores.push(c);
+}
+function arvores(lista,nome){
+  const grupo=new THREE.Group();mundo.add(grupo);
+  for(const a of lista){const y=alt(a.x,a.z),hTr=a.eucalipto?a.alt*.55:a.alt*.35;
+    registrar({tipo:"cil",x:a.x,z:a.z,r:a.palito?Math.max(.15,a.copa*.5):a.copa*.92,y0:a.palito?y:y+hTr*.8,y1:y+a.alt,nome:a.palito?a.nome||"o tronco seco (palito)":a.seca?a.nome||"a árvore seca":nome,tronco:.3,seca:!!(a.seca||a.palito),
+      dica:(a.seca||a.palito)
+        ?"Árvore seca, sem folhas, quase não devolve o sinal do radar. O desvio automático só a enxerga com a aeronave abaixo de 15 km/h; acima disso ela não freia nem desvia. Marque a árvore seca como obstáculo no planejamento ou reduza a velocidade perto dela."
+        :"Árvore dentro ou perto do talhão precisa ser marcada como obstáculo no planejamento. Com o desvio de obstáculos ligado, o radar enxerga árvore de longe e para a aeronave."})}
+  Promise.all([carregarGlb(GLB.verde),carregarGlb(GLB.outono),carregarGlb(GLB.seca)]).then(([verde,outono,seca])=>{
+    const cx=verde.userData.caixa,h0=cx.max.y,r0=Math.max(cx.max.x-cx.min.x,cx.max.z-cx.min.z)/2;
+    const cs=seca.userData.caixa,hs=cs.max.y,rs=Math.max(cs.max.x-cs.min.x,cs.max.z-cs.min.z)/2;
+    const v=[],o=[],sc=[],arb=[];
+    lista.forEach((a,i)=>{
+      if(a.palito)return;   /* o palito e desenhado a parte (palitos) */
+      if(a.seca){sc.push(matriz(a.x,alt(a.x,a.z)-.1,a.z,i*2.39,a.copa/rs,a.alt/hs));return}
+      if(!a.eucalipto&&a.alt<3.3){arb.push(a);return}   /* 24/10/2026: mato baixo e moita (moitas), nao arvore esticada */
+      const s=a.copa/r0*(a.eucalipto?.8:1),m=matriz(a.x,alt(a.x,a.z)-.1,a.z,i*2.39,s,a.alt/h0);
+      (!a.eucalipto&&i%17===8?o:v).push(m);
+    });
+    instanciar(verde,v,grupo,true);instanciar(outono,o,grupo,true);if(sc.length)instanciar(seca,sc,grupo,true);
+    palitos(lista,grupo);
+    moitas(arb,grupo);
+  }).catch(e=>{console.warn("árvores simples",e);arvoresSimples(lista,grupo)});
+}
+/* "mato" (24/10/2026): arbusto baixo (alt menor que 3,3 m). O modelo de arvore esticado so na horizontal virava uma pedra achatada;
+   aqui cada arbusto e uma moita de 3 bolas lisas (copa = raio na base, alt = altura), uma malha instanciada. A cor vem do vertice (mais escura
+   embaixo, com pintas de folha) vezes a cor da instancia (verde variando de um arbusto para outro, alguns secos). */
+function moitas(lista,grupo){
+  if(!lista.length)return;
+  const bola=(r,x,y,z)=>{const g=new THREE.IcosahedronGeometry(r,1);g.translate(x,y,z);return g};
+  const g=THREE.BufferGeometryUtils.mergeBufferGeometries([bola(.66,0,.5,0),bola(.52,.5,.4,.2),bola(.5,-.44,.38,-.24)]);
+  const p=g.attributes.position,cor=new Float32Array(p.count*3);
+  for(let i=0;i<p.count;i++){const t=Math.max(0,Math.min(1,p.getY(i)/1.1)),pinta=.88+.24*Math.abs(Math.sin(p.getX(i)*91+p.getY(i)*57+p.getZ(i)*37)),k=(.5+.5*t)*pinta;cor[i*3]=k;cor[i*3+1]=k;cor[i*3+2]=k}
+  g.setAttribute("color",new THREE.BufferAttribute(cor,3));
+  const im=new THREE.InstancedMesh(g,new THREE.MeshStandardMaterial({color:"#ffffff",vertexColors:true,roughness:1}),lista.length);
+  const o=new THREE.Object3D(),cc=new THREE.Color();
+  lista.forEach((a,i)=>{
+    o.position.set(a.x,alt(a.x,a.z)-.05,a.z);o.rotation.set(0,i*2.39,0);o.scale.set(Math.max(.5,a.copa),Math.max(.5,a.alt)/1.1,Math.max(.5,a.copa)*(.85+((i*5)%4)/12));o.updateMatrix();im.setMatrixAt(i,o.matrix);
+    if(i%16===3)cc.setHSL(.16+((i*3)%4)/100,.55,.42);else cc.setHSL(.26+((i*7)%7)/100,.5+((i*3)%5)/30,.25+((i*11)%7)/70);
+    im.setColorAt(i,cc);
+  });
+  im.castShadow=true;im.receiveShadow=true;im.frustumCulled=false;grupo.add(im);
+}
+/* "palito" (24/10/2026): tronco seco reto, sem galhos nem copa. alt = altura total, copa = espessura (0,25 a 0,6 m).
+   Um cilindro fino que afina para o topo, em uma unica malha instanciada. */
+function palitos(lista,grupo){
+  const p=lista.filter(a=>a.palito);if(!p.length)return;
+  const g=new THREE.CylinderGeometry(.045,.15,1,6);g.translate(0,.5,0);
+  const im=new THREE.InstancedMesh(g,new THREE.MeshStandardMaterial({color:"#ffffff",roughness:1,flatShading:true}),p.length);
+  const o=new THREE.Object3D(),cc=new THREE.Color();
+  p.forEach((a,i)=>{const e=Math.max(.5,(a.copa||.4)/.3);o.position.set(a.x,alt(a.x,a.z)-.05,a.z);o.rotation.set(0,i*2.39,0);o.scale.set(e,a.alt,e);o.updateMatrix();im.setMatrixAt(i,o.matrix);
+    cc.setHSL(.08+((i*7)%5)/100,.10+((i*3)%4)/50,.27+((i*11)%7)/100);im.setColorAt(i,cc)});
+  im.castShadow=true;im.receiveShadow=true;grupo.add(im);
+}
+function arvoresSimples(lista,grupo){
+  palitos(lista,grupo);lista=lista.filter(a=>!a.palito);
+  const n=lista.length;
+  const copa=new THREE.InstancedMesh(new THREE.IcosahedronGeometry(1,1),new THREE.MeshStandardMaterial({color:"#ffffff",roughness:1,flatShading:true}),n);
+  const tronco=new THREE.InstancedMesh(new THREE.CylinderGeometry(.16,.26,1,6),new THREE.MeshStandardMaterial({color:"#4a3a2a",roughness:1}),n);
+  const o=new THREE.Object3D(),cc=new THREE.Color();
+  lista.forEach((a,i)=>{
+    const y=alt(a.x,a.z),hTr=a.eucalipto?a.alt*.55:a.alt*.35;
+    o.position.set(a.x,y+hTr/2,a.z);o.rotation.set(0,0,0);o.scale.set(a.eucalipto?.8:1,hTr,a.eucalipto?.8:1);o.updateMatrix();tronco.setMatrixAt(i,o.matrix);
+    const hc=a.alt-hTr*.8;
+    o.position.set(a.x,y+hTr*.8+hc/2,a.z);o.rotation.set(i*.7,i*1.3,i*.4);
+    o.scale.set(a.copa,hc/2,a.copa);o.updateMatrix();copa.setMatrixAt(i,o.matrix);
+    if(a.eucalipto)cc.setHSL(.30,.16,.30+((i*37)%10)/100);else cc.setHSL(.25+((i*13)%6)/100,.34,.21+((i*29)%9)/100);
+    copa.setColorAt(i,cc);
+  });
+  copa.castShadow=true;tronco.castShadow=true;grupo.add(copa,tronco);
+}
+function poste(x,z,H,ang){
+  const g=new THREE.Group(),y=alt(x,z);
+  const p=new THREE.Mesh(new THREE.CylinderGeometry(.12,.17,H,8),new THREE.MeshStandardMaterial({color:"#9aa0a3",roughness:.9}));p.position.y=H/2;
+  const cruzeta=new THREE.Mesh(new THREE.BoxGeometry(2.3,.12,.12),new THREE.MeshStandardMaterial({color:"#6b5a44",roughness:1}));
+  cruzeta.position.y=H-.45;cruzeta.rotation.y=ang;
+  g.add(p,cruzeta);g.position.set(x,y,z);g.traverse(o=>{if(o.isMesh)o.castShadow=true});mundo.add(g);
+  registrar({tipo:"cil",x,z,r:.35,y0:y,y1:y+H,nome:"o poste",dica:"O radar detecta poste. Sem desvio de obstáculos, marque cada poste no planejamento do campo."});
+  return y+H-.45;
+}
+function redeEletrica(pontos,H,flecha,tipo){
+  const fioMat=new THREE.MeshStandardMaterial({color:"#1b1d20",roughness:.6,metalness:.3});
+  const topo=[];
+  for(let i=0;i<pontos.length;i++){
+    const [x,z]=pontos[i],viz=pontos[Math.min(i+1,pontos.length-1)],ant=pontos[Math.max(i-1,0)];
+    const ang=Math.atan2(viz[1]-ant[1],viz[0]-ant[0]);
+    topo.push({x,z,y:poste(x,z,H,-ang+Math.PI/2),ang});
+  }
+  for(let i=0;i+1<topo.length;i++){
+    const A=topo[i],B=topo[i+1];
+    for(const off of [-1.05,0,1.05]){
+      const px=-Math.sin(A.ang)*off,pz=Math.cos(A.ang)*off;
+      const a=new THREE.Vector3(A.x+px,A.y+.1,A.z+pz),b=new THREE.Vector3(B.x+px,B.y+.1,B.z+pz);
+      const pts=[],N=16;
+      for(let k=0;k<=N;k++){const t=k/N,p=a.clone().lerp(b,t);p.y-=flecha*4*t*(1-t);pts.push(p)}
+      mundo.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts),N*2,.028,5,false),fioMat));
+      for(let k=0;k<N;k++)registrar({tipo:"seg",a:pts[k],b:pts[k+1],r:.03,fio:true,nome:"a rede de "+tipo,
+        dica:"O manual do T50 avisa: com linhas de energia ou obstáculos pequenos, a detecção pode ser ineficaz. O radar só enxergou o fio de muito perto e a aeronave não parou a tempo. Perto de rede, reduza a velocidade, passe bem acima dela ou marque a rede como obstáculo."});
+    }
+  }
+}
+function mastro(x,z,H,nome){
+  const y=alt(x,z),g=new THREE.Group();
+  const trelica=new THREE.Mesh(new THREE.CylinderGeometry(.35,.6,H,3,14,true),new THREE.MeshStandardMaterial({color:"#c7ccd0",wireframe:true}));
+  trelica.position.y=H/2;
+  const nucleo=new THREE.Mesh(new THREE.CylinderGeometry(.06,.08,H,6),new THREE.MeshStandardMaterial({color:"#9aa0a3"}));nucleo.position.y=H/2;
+  const antena=new THREE.Mesh(new THREE.CylinderGeometry(.5,.5,.12,16),new THREE.MeshStandardMaterial({color:"#e8eaec"}));
+  antena.position.set(.4,H-1.5,0);antena.rotation.z=Math.PI/2;
+  g.add(trelica,nucleo,antena);g.position.set(x,y,z);g.traverse(o=>{if(o.isMesh)o.castShadow=true});mundo.add(g);
+  registrar({tipo:"cil",x,z,r:.7,y0:y,y1:y+H,nome,dica:"Torre fina dentro da área. Marque como obstáculo no planejamento — sem desvio de obstáculos a rota passa direto por ela."});
+}
+function predio(x,z,sx,sz,hp,rot,corP,corT,nome){
+  const y=alt(x,z),g=new THREE.Group();
+  const parede=new THREE.Mesh(new THREE.BoxGeometry(sx,hp,sz),new THREE.MeshStandardMaterial({color:corP,roughness:.9}));parede.position.y=hp/2;
+  const forma=new THREE.Shape([new THREE.Vector2(-sz/2-.35,0),new THREE.Vector2(sz/2+.35,0),new THREE.Vector2(0,sz*.32)]);
+  const gt=new THREE.ExtrudeGeometry(forma,{depth:sx+.6,bevelEnabled:false});gt.translate(0,0,-(sx+.6)/2);gt.rotateY(Math.PI/2);
+  const tel=new THREE.Mesh(gt,new THREE.MeshStandardMaterial({color:corT,roughness:.8,flatShading:true}));tel.position.y=hp;
+  g.add(parede,tel);g.position.set(x,y-.2,z);g.rotation.y=rot;
+  g.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true}});mundo.add(g);
+  registrar({tipo:"caixa",x,z,sx:sx+1,sz:sz+1,rot,y0:y,y1:y+hp+sz*.32,nome,dica:"Construção perto da base: a subida e o retorno passam por cima dela. Confira a Altitude RTH."});
+}
+let bananeiraBase=null;
+function bananeiras(lista){
+  const grupo=new THREE.Group();mundo.add(grupo);
+  for(const p of lista)registrar({tipo:"cil",x:p.x,z:p.z,r:p.h*.45,y0:alt(p.x,p.z),y1:alt(p.x,p.z)+p.h,nome:"a bananeira",tronco:.25,
+    dica:"Bananal perto da sede: as folhas abrem longe do tronco. Planeje a rota e a subida da base com folga."});
+  if(!bananeiraBase)bananeiraBase=new Promise((ok,erro)=>{
+    const pasta="assets/web/palmeira/",tl=new THREE.TextureLoader(),tex=(n,cor)=>{const x=tl.load(pasta+n+".png");if(cor)x.encoding=THREE.sRGBEncoding;return x};
+    const mats={
+      Default_Stem1:new THREE.MeshStandardMaterial({map:tex("TR13brk",1),roughness:1}),
+      Default_Stem2:new THREE.MeshStandardMaterial({map:tex("TR13brk2",1),roughness:1}),
+      Default_leaf2:new THREE.MeshStandardMaterial({map:tex("TR13lef1",1),alphaTest:.5,side:THREE.DoubleSide,roughness:.8}),
+      Default_rotten:new THREE.MeshStandardMaterial({map:tex("TR13lef2",1),alphaTest:.5,side:THREE.DoubleSide,roughness:1}),
+    };
+    new THREE.FBXLoader().load(pasta+"palmeira.fbx",f=>{
+      f.traverse(o=>{if(o.isMesh){o.material=[].concat(o.material).map(m=>mats[m.name]||m);if(o.material.length===1)o.material=o.material[0];o.castShadow=true}});
+      const b=new THREE.Box3().setFromObject(f);f.userData.altura=b.max.y-b.min.y;f.userData.base=b.min.y;ok(f);
+    },undefined,erro);
+  });
+  bananeiraBase.then(f=>{
+    lista.forEach((p,i)=>{const c=f.clone(),e=p.h/f.userData.altura;
+      c.scale.setScalar(e);c.position.set(p.x,alt(p.x,p.z)-f.userData.base*e,p.z);c.rotation.y=i*2.1;grupo.add(c)});
+  }).catch(e=>console.warn("bananeira não carregou",e));
+}
+function silo(x,z){
+  const y=alt(x,z),g=new THREE.Group(),m=new THREE.MeshStandardMaterial({color:"#c9ced3",roughness:.35,metalness:.6});
+  const corpo=new THREE.Mesh(new THREE.CylinderGeometry(3.4,3.4,13,24),m);corpo.position.y=6.5;
+  const teto=new THREE.Mesh(new THREE.ConeGeometry(3.6,2.4,24),m);teto.position.y=14.2;
+  g.add(corpo,teto);g.position.set(x,y,z);g.traverse(o=>{if(o.isMesh)o.castShadow=true});mundo.add(g);
+  registrar({tipo:"cil",x,z,r:3.6,y0:y,y1:y+15.4,nome:"o silo",dica:"No alto da encosta o topo do silo fica na altura da rota. Com relevo forte, use o terreno Montanhas e pomares."});
+}
+function acude(x,z,r){
+  acudes.push({x,z,r});
+  const agua=new THREE.Mesh(new THREE.CircleGeometry(r,48),new THREE.MeshStandardMaterial({color:"#3f6b78",roughness:.12,metalness:.15,transparent:true,opacity:.9}));
+  agua.rotation.x=-Math.PI/2;agua.position.set(x,alt(x,z)+2.6,z);mundo.add(agua);
+}
+/* ===================================================================
+   OPERADOR — trabalhadores em Collada (esqueleto do manequim Unreal)
+   =================================================================== */
+const TRABALHADORES=[
+  {id:"tall_european_worker",nome:"Chapéu",olho:"brownlight_eye",pele:"middleage_lightskinned_male_diffuse"},
+  {id:"norm_european_worker",nome:"Cabelo curto",olho:"blue_eye",pele:"middleage_lightskinned_male_diffuse"},
+  {id:"asian_worker",nome:"Grisalho",olho:"green_eye",pele:"old_lightskinned_male_diffuse2"},
+  {id:"african_worker",nome:"Careca",olho:"brown_eye",pele:"old_darkskinned_male_diffuse"},
+  {id:"fat_european_worker",nome:"Robusto",olho:"grey_eye",pele:"old_lightskinned_male_diffuse"},
+];
+let avatarEscolhido=TRABALHADORES[0].id;
+try{const s=localStorage.getItem("t50_avatar");if(TRABALHADORES.some(a=>a.id===s))avatarEscolhido=s}catch(e){}
+const grupoOperador=new THREE.Group();cena.add(grupoOperador);
+const cacheAvatar={};
+
+function carregarTrabalhador(def){
+  if(cacheAvatar[def.id])return cacheAvatar[def.id];
+  const pasta="assets/web/trabalhadores/"+def.id+"/";
+  return cacheAvatar[def.id]=new Promise((ok,erro)=>new THREE.ColladaLoader().load(pasta+"modelo.dae",col=>{
+    const av=col.scene,tl=new THREE.TextureLoader(),B={};
+    const tex=n=>{const t=tl.load(pasta+"textures/"+n+".png");t.encoding=THREE.sRGBEncoding;return t};
+    av.traverse(o=>{
+      if(o.isBone)B[o.name]=o;
+      if(!o.isSkinnedMesh)return;
+      const k=o.name.replace(/^.*?-/,"");
+      if(/teeth|tongue/.test(k)){o.visible=false;return}
+      const arq=k==="base"?def.pele:k==="low_poly"?def.olho:k==="fedora_cocked"?"fedora_texture":k+"_diffuse";
+      o.material=new THREE.MeshStandardMaterial({map:tex(arq),roughness:k==="low_poly"?.3:.85,
+        transparent:/^short/.test(k),alphaTest:/^short/.test(k)?.4:0,side:/^short/.test(k)?THREE.DoubleSide:THREE.FrontSide});
+      o.castShadow=true;o.frustumCulled=false;
+    });
+    /* pose: braços dobrados à frente, segurando o controle (personagem olha para +z) */
+    const apontar=(osso,filho,dir)=>{
+      av.updateMatrixWorld(true);
+      const a=new THREE.Vector3().setFromMatrixPosition(B[osso].matrixWorld),b=new THREE.Vector3().setFromMatrixPosition(B[filho].matrixWorld);
+      const dq=new THREE.Quaternion().setFromUnitVectors(b.sub(a).normalize(),new THREE.Vector3(...dir).normalize());
+      const wq=B[osso].getWorldQuaternion(new THREE.Quaternion()),pq=B[osso].parent.getWorldQuaternion(new THREE.Quaternion());
+      B[osso].quaternion.copy(pq.invert().multiply(dq.multiply(wq)));
+    };
+    apontar("upperarm_r","lowerarm_r",[-.14,-.93,.28]);apontar("lowerarm_r","hand_r",[.4,.12,.9]);
+    apontar("upperarm_l","lowerarm_l",[.14,-.93,.28]);apontar("lowerarm_l","hand_l",[-.4,.12,.9]);
+    apontar("neck_01","head",[0,.9,.3]);
+    av.updateMatrixWorld(true);
+    const escala=1.78/2.52;
+    const mao=n=>new THREE.Vector3().setFromMatrixPosition(B[n].matrixWorld);
+    const meio=mao("hand_r").add(mao("hand_l")).multiplyScalar(.5);
+    const g=new THREE.Group();g.add(av);
+    g.userData.B=B;g.userData.av=av;g.userData.avY=av.position.y;g.userData.repouso={};
+    for(const n of ["thigh_l","calf_l","foot_l","thigh_r","calf_r","foot_r"])g.userData.repouso[n]=B[n].quaternion.clone();
+    /* controle DJI RC Plus: corpo, tela e antenas, entre as mãos */
+    const rc=new THREE.Group(),m=c=>new THREE.MeshStandardMaterial({color:c,roughness:.6});
+    const corpo=new THREE.Mesh(new THREE.BoxGeometry(.27/escala,.15/escala,.04/escala),m("#1b1f23"));
+    const tela=new THREE.Mesh(new THREE.PlaneGeometry(.2/escala,.12/escala),new THREE.MeshStandardMaterial({color:"#9fc6ee",emissive:"#2f6fb0",emissiveIntensity:.7}));
+    tela.position.z=.024/escala;tela.rotation.y=Math.PI;tela.position.z=-.024/escala;
+    for(const x of [-.11,.11]){const an=new THREE.Mesh(new THREE.BoxGeometry(.03/escala,.1/escala,.01/escala),m("#2a2e33"));an.position.set(x/escala,.12/escala,.01/escala);rc.add(an)}
+    rc.add(corpo,tela);rc.position.copy(meio).add(new THREE.Vector3(0,.05/escala,.02/escala));rc.rotation.x=-.75;
+    rc.traverse(o=>{if(o.isMesh)o.castShadow=true});
+    g.add(rc);g.scale.setScalar(escala);
+    ok(g);
+  },undefined,erro));
+}
+function operador(){
+  const ox=BASE.x-5,oz=BASE.z+5; /* fora do raio de bloqueio de 6 m */
+  grupoOperador.position.set(ox,alt(ox,oz),oz);grupoOperador.rotation.y=Math.PI*.85+Math.PI;
+  const anel=new THREE.Mesh(new THREE.RingGeometry(2.4,2.6,48),new THREE.MeshBasicMaterial({color:"#ffffff",transparent:true,opacity:.8}));
+  anel.rotation.x=-Math.PI/2;anel.position.set(BASE.x,alt(BASE.x,BASE.z)+.06,BASE.z);mundo.add(anel);
+  trocarAvatar(avatarEscolhido);
+}
+function trocarAvatar(id){
+  avatarEscolhido=id;try{localStorage.setItem("t50_avatar",id)}catch(e){}
+  const def=TRABALHADORES.find(a=>a.id===id);
+  carregarTrabalhador(def).then(g=>{if(avatarEscolhido!==id)return;grupoOperador.clear();grupoOperador.add(g)})
+    .catch(e=>console.warn("avatar não carregou",e));
+}
+
+const tmpA=new THREE.Vector3(),tmpB=new THREE.Vector3();
+function distColisor(c,p){
+  if(c.tipo==="cil"){
+    const dh=Math.max(0,Math.hypot(p.x-c.x,p.z-c.z)-c.r);
+    const dy=p.y<c.y0?c.y0-p.y:(p.y>c.y1?p.y-c.y1:0);return Math.hypot(dh,dy);
+  }
+  if(c.tipo==="caixa"){
+    const cs=Math.cos(-c.rot),sn=Math.sin(-c.rot),lx=(p.x-c.x)*cs-(p.z-c.z)*sn,lz=(p.x-c.x)*sn+(p.z-c.z)*cs;
+    const dx=Math.max(0,Math.abs(lx)-c.sx/2),dz=Math.max(0,Math.abs(lz)-c.sz/2);
+    const dy=p.y<c.y0?c.y0-p.y:(p.y>c.y1?p.y-c.y1:0);return Math.hypot(dx,dy,dz);
+  }
+  tmpA.subVectors(c.b,c.a);tmpB.subVectors(p,c.a);
+  const t=trava(tmpB.dot(tmpA)/tmpA.lengthSq(),0,1);
+  tmpA.multiplyScalar(t).add(c.a);return tmpA.distanceTo(p)-c.r;
+}
+const topoColisor=c=>c.tipo==="seg"?Math.max(c.a.y,c.b.y):c.y1;
+
+/* ===================================================================
+   AGRAS T50 — modelo OBJ
+   =================================================================== */
+const drone=new THREE.Group(),inclina=new THREE.Group(),helices=[];
+drone.add(inclina);
+const ESCALA=3.085/2030;   /* comprimento real com hélices abertas / comprimento no arquivo */
+/* 18/11/2026 (Eduardo: "confere o tamanho nos outros modelos", "Sim, acerta os dois"): com a escala acima a ESTRUTURA do T50
+   ficava 12 a 15% maior que a real (2,52 m entre motores na diagonal e 0,92 m de altura; a ficha da DJI dá 2,20 m e 0,82 m),
+   enquanto as hélices já estavam no tamanho certo (1,37 m). A estrutura entra em 2,20/2,52 e cada hélice volta ao tamanho
+   dela em volta do próprio eixo. */
+const ESCALA_T50=2.20/2.52;
+
+function corDaPeca(nome){
+  if(/Propeller_P1$/.test(nome))return null;               /* pás: tratadas à parte */
+  if(/Propeller/.test(nome))return "#23262a";              /* braços e motores */
+  if(/WaterTank_P1$/.test(nome))return "#2b2f33";          /* tampa */
+  if(/WaterTank/.test(nome))return "#dfe4e7";              /* tanque */
+  if(/Battery/.test(nome))return "#16181b";
+  if(/Foot/.test(nome))return "#5f666c";
+  if(/Front_P8$/.test(nome))return "#101214";              /* radar/FPV dianteiro */
+  return "#3a3f45";                                        /* carenagem */
+}
+
+new THREE.OBJLoader().load("dat50/t50.obj",obj=>{
+  const modelo=new THREE.Group();
+  const mats={};
+  const mat=cor=>mats[cor]||(mats[cor]=new THREE.MeshStandardMaterial({color:cor,roughness:.55,metalness:.12}));
+  const pas=new THREE.MeshStandardMaterial({color:"#141619",roughness:.45,metalness:.1});
+  const filhos=[...obj.children];
+  for(const m of filhos){
+    if(!m.isMesh)continue;
+    const cor=corDaPeca(m.name);
+    if(cor){m.material=mat(cor);m.castShadow=true;m.receiveShadow=true;modelo.add(m);continue}
+    separarPas(m.geometry,pas,modelo);
+  }
+  const cx=new THREE.Box3().setFromObject(modelo),c=cx.getCenter(new THREE.Vector3());
+  const E50=ESCALA*ESCALA_T50;
+  modelo.scale.setScalar(E50);
+  modelo.position.set(-c.x*E50,-cx.min.y*E50,-c.z*E50);
+  helices.forEach(h=>h.scale.setScalar(1/ESCALA_T50));
+  inclina.add(modelo);
+  cena.add(drone);
+  criarNevoa();
+  $("carregando").remove();
+  construirCenario(cen);reiniciarVoo();abrirInicio();
+},undefined,erro=>{$("carregando").textContent="Não foi possível carregar o modelo do T50: "+erro});
+
+/* As pás de cada lado vêm num objeto só: 4 pás (2 rotores × coaxial).
+   Separa por lado (x) e por nível (y) e gira cada rotor no próprio cubo. */
+function separarPas(geo,material,destino){
+  const pos=geo.attributes.position,nor=geo.attributes.normal;
+  geo.computeBoundingBox();const yMeio=(geo.boundingBox.min.y+geo.boundingBox.max.y)/2;
+  const grupos={};
+  for(let i=0;i<pos.count;i+=3){
+    let cx=0,cy=0;for(let k=0;k<3;k++){cx+=pos.getX(i+k);cy+=pos.getY(i+k)}
+    const chave=(cx>0?"d":"e")+(cy/3>yMeio?"c":"b");
+    (grupos[chave]||(grupos[chave]={p:[],n:[]}));
+    for(let k=0;k<3;k++){
+      grupos[chave].p.push(pos.getX(i+k),pos.getY(i+k),pos.getZ(i+k));
+      if(nor)grupos[chave].n.push(nor.getX(i+k),nor.getY(i+k),nor.getZ(i+k));
+    }
+  }
+  for(const chave in grupos){
+    const g=new THREE.BufferGeometry();
+    g.setAttribute("position",new THREE.Float32BufferAttribute(grupos[chave].p,3));
+    if(grupos[chave].n.length)g.setAttribute("normal",new THREE.Float32BufferAttribute(grupos[chave].n,3));else g.computeVertexNormals();
+    g.computeBoundingBox();const c=g.boundingBox.getCenter(new THREE.Vector3());
+    g.translate(-c.x,-c.y,-c.z);
+    const m=new THREE.Mesh(g,material);m.castShadow=true;
+    const cubo=new THREE.Group();cubo.position.copy(c);cubo.add(m);
+    cubo.userData.sentido=(chave[0]==="d"?1:-1)*(chave[1]==="c"?1:-1);
+    destino.add(cubo);helices.push(cubo);
+  }
+}
+
+/* ===================================================================
+   CALDA
+   =================================================================== */
+const NP=1000;let nevoa,nPos;const pv=[];
+function criarNevoa(){
+  const g=new THREE.BufferGeometry();nPos=new Float32Array(NP*3);
+  g.setAttribute("position",new THREE.BufferAttribute(nPos,3));
+  const c=document.createElement("canvas");c.width=c.height=64;const x=c.getContext("2d");
+  const gr=x.createRadialGradient(32,32,0,32,32,32);gr.addColorStop(0,"#fff");gr.addColorStop(1,"rgba(255,255,255,0)");
+  x.fillStyle=gr;x.fillRect(0,0,64,64);
+  nevoa=new THREE.Points(g,new THREE.PointsMaterial({size:.45,map:new THREE.CanvasTexture(c),transparent:true,opacity:.17,depthWrite:false,color:"#dcecf5"}));
+  nevoa.frustumCulled=false;cena.add(nevoa);
+  for(let i=0;i<NP;i++)pv.push({x:0,y:-999,z:0,vx:0,vy:0,vz:0,vida:0});
+}
+let proxP=0;
+function emitir(dt,ligado){
+  if(!nevoa)return;
+  if(ligado){
+    const n=Math.round(dt*900),d=drone.position,fx=Math.cos(V.yaw),fz=-Math.sin(V.yaw);
+    for(let k=0;k<n;k++){
+      const p=pv[proxP];proxP=(proxP+1)%NP;const lado=(Math.random()-.5)*larguraEfetiva()*.55;
+      p.x=d.x+fz*lado*.35;p.z=d.z-fx*lado*.35;p.y=d.y+.35;
+      p.vx=fz*lado*1.4+(Math.random()-.5)*.4;p.vz=-fx*lado*1.4+(Math.random()-.5)*.4;
+      p.vy=-2.3-Math.random()*1.2;p.vida=1.2+Math.random()*.5;
+    }
+  }
+  for(let i=0;i<NP;i++){
+    const p=pv[i];
+    if(p.vida>0){p.vida-=dt;p.x+=p.vx*dt;p.y+=p.vy*dt;p.z+=p.vz*dt;p.vx*=.96;p.vz*=.96;if(p.y<alt(p.x,p.z))p.vida=0}
+    nPos[i*3]=p.x;nPos[i*3+1]=p.vida>0?p.y:-999;nPos[i*3+2]=p.z;
+  }
+  nevoa.geometry.attributes.position.needsUpdate=true;
+}
+
+/* ===================================================================
+   OPERAÇÃO
+   =================================================================== */
+const P={altura:3,vel:7,faixa:7.5,gota:300,vazao:15,rth:20,modo:"facil",terreno:"planicie",desvio:true,estab:true};
+let rota=[];
+const V={mult:1};
+
+/* ===================================================================
+   MAPA DO CAMPO E ROTA
+   =================================================================== */
+const MARGEM_BORDA=2.5,MARGEM_OBS=3;
+const MAPAS={};
+const chaveMapa=id=>"t50_mapa_"+id;
+function mapaAtual(){
+  if(!(cen.id in MAPAS)){
+    let m=null;try{m=JSON.parse(localStorage.getItem(chaveMapa(cen.id)))}catch(e){}
+    MAPAS[cen.id]=m&&Array.isArray(m.limite)&&m.limite.length>=3?m:null;
+  }
+  return MAPAS[cen.id];
+}
+function salvarMapa(m){
+  MAPAS[cen.id]=m;
+  try{if(m)localStorage.setItem(chaveMapa(cen.id),JSON.stringify(m));else localStorage.removeItem(chaveMapa(cen.id))}catch(e){}
+}
+function mapaPronto(){
+  const T=TALHAO;
+  return {pronto:true,limite:[[T.x0,T.z0],[T.x0+T.larg,T.z0],[T.x0+T.larg,T.z0+T.prof],[T.x0,T.z0+T.prof]],obstaculos:[]};
+}
+const areaPoligono=pts=>{let s=0;for(let i=0;i<pts.length;i++){const a=pts[i],b=pts[(i+1)%pts.length];s+=a[0]*b[1]-b[0]*a[1]}return Math.abs(s)/2};
+const perimetro=(pts,fechado)=>{let s=0;for(let i=0;i+(fechado?0:1)<pts.length;i++){const a=pts[i],b=pts[(i+1)%pts.length];s+=Math.hypot(b[0]-a[0],b[1]-a[1])}return s};
+function envoltoria(pts){
+  const p=pts.map(q=>[q[0],q[1]]).sort((a,b)=>a[0]-b[0]||a[1]-b[1]);if(p.length<3)return p;
+  const cr=(o,a,b)=>(a[0]-o[0])*(b[1]-o[1])-(a[1]-o[1])*(b[0]-o[0]),lo=[],hi=[];
+  for(const q of p){while(lo.length>=2&&cr(lo[lo.length-2],lo[lo.length-1],q)<=0)lo.pop();lo.push(q)}
+  for(const q of p.slice().reverse()){while(hi.length>=2&&cr(hi[hi.length-2],hi[hi.length-1],q)<=0)hi.pop();hi.push(q)}
+  return lo.slice(0,-1).concat(hi.slice(0,-1));
+}
+const areaComSinal=z=>{let s=0;for(let i=0;i<z.length;i++){const a=z[i],b=z[(i+1)%z.length];s+=a[0]*b[1]-b[0]*a[1]}return s/2};
+/* zona proibida de um obstáculo marcado: polígono convexo já com a margem */
+function zonaObstaculo(o){
+  if(o.tipo==="circulo"){const R=(o.r+MARGEM_OBS)/Math.cos(Math.PI/16),z=[];
+    for(let k=0;k<16;k++){const a=k/16*2*Math.PI;z.push([o.c[0]+Math.cos(a)*R,o.c[1]+Math.sin(a)*R])}return z}
+  const h=envoltoria(o.pts),n=h.length;if(n<3)return [];
+  const sg=areaComSinal(h)>0?1:-1;
+  /* normal para fora da aresta a→b */
+  const nor=(a,b)=>{const dx=b[0]-a[0],dz=b[1]-a[1],l=Math.hypot(dx,dz)||1;return [dz/l*sg,-dx/l*sg]};
+  return h.map((v,i)=>{
+    const n1=nor(h[(i-1+n)%n],v),n2=nor(v,h[(i+1)%n]);
+    let bx=n1[0]+n2[0],bz=n1[1]+n2[1];const l=Math.hypot(bx,bz)||1;bx/=l;bz/=l;
+    const k=Math.min(3,1/Math.max(.2,bx*n1[0]+bz*n1[1]))*MARGEM_OBS;
+    return [v[0]+bx*k,v[1]+bz*k];
+  });
+}
+function cortesEmX(pts,X){
+  const zs=[];
+  for(let i=0;i<pts.length;i++){const a=pts[i],b=pts[(i+1)%pts.length];
+    if((a[0]<=X&&b[0]>X)||(b[0]<=X&&a[0]>X))zs.push(a[1]+(X-a[0])*(b[1]-a[1])/(b[0]-a[0]))}
+  return zs.sort((a,b)=>a-b);
+}
+/* trecho a→b atravessa a zona convexa? devolve entrada/saída e as arestas */
+function cruzaZona(z,a,b){
+  const n=z.length,sg=areaComSinal(z)>0?1:-1,dx=b[0]-a[0],dz=b[1]-a[1];
+  let t0=0,t1=1,e0=-1,e1=-1;
+  for(let i=0;i<n;i++){
+    const p=z[i],q=z[(i+1)%n],nx=(q[1]-p[1])*sg,nz=-(q[0]-p[0])*sg;
+    const num=nx*(a[0]-p[0])+nz*(a[1]-p[1]),den=nx*dx+nz*dz;
+    if(Math.abs(den)<1e-9){if(num>-1e-6)return null;continue}
+    const t=-num/den;
+    /* ponta em cima da borda da zona (fim de faixa cortada) conta como entrada/saída */
+    if(den<0){if(t>t0||(e0<0&&t>=t0-1e-6)){t0=Math.max(t,0);e0=i}}else{if(t<t1||(e1<0&&t<=t1+1e-6)){t1=Math.min(t,1);e1=i}}
+    if(t0>t1)return null;
+  }
+  if((t1-t0)*Math.hypot(dx,dz)<.6||e0<0||e1<0)return null;
+  return {t0,t1,e0,e1};
+}
+/* caminho de a até b contornando as zonas; se o contorno sair do campo ou ficar longo demais,
+   passa por cima na altitude RTH (roteamento de conexão) */
+function contornar(a,b,zonas,limite,prof){
+  let melhor=null;
+  zonas.forEach(z=>{const c=cruzaZona(z,a,b);if(c&&(!melhor||c.t0<melhor.c.t0))melhor={z,c}});
+  if(!melhor)return [];
+  if(prof>6)return [{p:b.slice(),aplica:false,alto:true}];
+  const {z,c}=melhor,n=z.length,frente=[],tras=[];
+  for(let i=(c.e0+1)%n,k=0;k<n;i=(i+1)%n,k++){frente.push(z[i]);if(i===c.e1)break}
+  for(let i=c.e0,k=0;k<n;i=(i-1+n)%n,k++){if(i===c.e1)break;tras.push(z[i])}
+  const E=[a[0]+(b[0]-a[0])*c.t0,a[1]+(b[1]-a[1])*c.t0],X=[a[0]+(b[0]-a[0])*c.t1,a[1]+(b[1]-a[1])*c.t1];
+  const comp=l=>{let s=0,p=E;for(const q of l.concat([X])){s+=Math.hypot(q[0]-p[0],q[1]-p[1]);p=q}return s};
+  const cam=frente.length&&(comp(frente)<=comp(tras)||!tras.length)?frente:tras;
+  if(!cam.length)return [{p:b.slice(),aplica:false,alto:true}];
+  const xs=limite.map(p=>p[0]),zs=limite.map(p=>p[1]);
+  const fora=cam.some(q=>q[0]<Math.min(...xs)-12||q[0]>Math.max(...xs)+12||q[1]<Math.min(...zs)-12||q[1]>Math.max(...zs)+12);
+  if(fora||comp(cam)>Math.hypot(X[0]-E[0],X[1]-E[1])*3+40)return [{p:b.slice(),aplica:false,alto:true}];
+  return cam.map(q=>({p:q,aplica:false})).concat(contornar(cam[cam.length-1],b,zonas,limite,prof+1));
+}
+function gerarRota(){
+  rota=[];const M=mapaAtual();if(!M)return;
+  const lim=M.limite,zonas=M.obstaculos.map(zonaObstaculo).filter(z=>z.length>=3);
+  const xs=lim.map(p=>p[0]),minX=Math.min(...xs),maxX=Math.max(...xs);
+  let dir=1;
+  const empurra=(ini,fim)=>{
+    if(rota.length){
+      const ult=rota[rota.length-1].p;
+      for(const w of contornar(ult,ini,zonas,lim,0))rota.push(w);
+      const u=rota[rota.length-1].p;
+      if(Math.hypot(u[0]-ini[0],u[1]-ini[1])>.1)rota.push({p:ini,aplica:false});
+    } else rota.push({p:ini,aplica:false});
+    rota.push({p:fim,aplica:true});
+  };
+  for(let X=minX+MARGEM_BORDA+P.faixa/2;X<=maxX-MARGEM_BORDA+1e-6;X+=P.faixa){
+    const zs=cortesEmX(lim,X);let trechos=[];
+    for(let k=0;k+1<zs.length;k+=2){const a=zs[k]+MARGEM_BORDA,b=zs[k+1]-MARGEM_BORDA;if(b-a>1)trechos.push([a,b])}
+    for(const z of zonas){
+      const c=cortesEmX(z,X);if(c.length<2)continue;const za=c[0],zb=c[c.length-1];
+      trechos=trechos.flatMap(([a,b])=>{if(zb<=a||za>=b)return [[a,b]];const r=[];if(za-a>1)r.push([a,za]);if(b-zb>1)r.push([zb,b]);return r});
+    }
+    trechos.sort((p,q)=>p[0]-q[0]);
+    if(!trechos.length)continue;
+    if(dir>0)trechos.slice().reverse().forEach(([a,b])=>empurra([X,b],[X,a]));
+    else trechos.forEach(([a,b])=>empurra([X,a],[X,b]));
+    dir=-dir;
+  }
+}
+/* largura efetiva de pulverização. Manual do T50: 4 a 11 m a 3 m acima da cultura.
+   Aqui a gota define onde fica nessa faixa (gota fina cai no downwash, gota grossa é lançada mais longe
+   pelos aspersores centrífugos) e a altura abre ou fecha o leque. */
+function larguraEfetiva(){
+  const E=efetivo(),a3=4+(trava(P.gota,50,500)-50)/450*7;
+  return a3*trava(.45+.55*E.altura/3,.6,1.15);
+}
+function situacaoFaixa(){
+  const L=larguraEfetiva(),s=P.faixa,dif=L-s;
+  return {L,s,fecha:dif>=-.05,sobre:Math.max(0,dif),falha:Math.max(0,-dif),pctSobre:Math.max(0,dif)/s*100};
+}
+/* parâmetros efetivos: o desvio de obstáculos limita velocidade e altura */
+function efetivo(){
+  let vel=P.vel,altura=P.altura;
+  if(P.desvio){vel=Math.min(vel,T50.velMaxDesvio);altura=trava(altura,T50.altMinDesvio,T50.altMaxDesvio)}
+  else altura=Math.min(altura,15);   /* T50 sem o desvio multidirecional: ate 15 m */
+  return {vel,altura};
+}
+function reiniciarVoo(){
+  Object.assign(V,{estado:"em solo",i:0,bat:100,tan:T50.tanque,aplicado:0,calda:0,tempo:0,recargas:0,
+    v:0,vy:0,yaw:Math.PI/2,dirx:0,dirz:-1,ultimoObs:null,retomar:null,espera:0,extra:0,obsExtra:null,desvioLat:null,
+    antesPairar:null,obs:null,sondaT:0,sonda:null,freando:false,avisoBat:false,
+    vqx:0,vqz:0,noChao:false,desce:false,aguardaSubida:false,recuo:null,fase:null,extraPend:0,rodando:false,aplicando:false,vazaoAtual:0,referencia:0,motivo:null,
+    /* simulador (manual.js/app_rcplus.js): ajuste do acelerador, trechos pulados na
+       retomada pelos pontos 1/2, freio da pausa e o ponto de retorno escolhido */
+    xgAjuste:0,pulos:[],xgFreio:false,xgVolta:null,xgSobre:null});
+  limparCobertura();
+  gerarRota();
+  drone.position.set(BASE.x,alt(BASE.x,BASE.z),BASE.z);
+  drone.rotation.set(0,0,0);
+  V.referencia=alt(BASE.x,BASE.z);
+  fecharAlerta();for(const id of ["queda","fim"])$(id).hidden=true;
+  for(const p of pv)p.vida=0;
+  $("bPausa").textContent="Pausar";
+}
+
+/* altura desejada. Montanhas olha mais à frente e sobe mais rápido que Planícies. */
+function alturaAlvo(agl){
+  const d=drone.position;
+  if(!P.estab)return V.referencia+agl+V.extra;
+  const fx=V.dirx,fz=V.dirz;
+  /* antecipa o terreno pelo tempo de reação: Montanhas olha mais à frente que Planícies */
+  const olhar=Math.max(1.5,V.v*(P.terreno==="montanha"?1.1:.5));
+  const chao=Math.max(alt(d.x,d.z),alt(d.x+fx*olhar,d.z+fz*olhar));
+  return chao+agl+V.extra;
+}
+
+/* radar: primeiro obstáculo na direção do voo (fio só de muito perto).
+   17/11/2026 (Eduardo: "o drone desvia e não segue a linha gerada no controle, faz outra aleatória"): seguindo a rota do DJI, o
+   radar olha AO LONGO da linha planejada (xgLinhaDoRadar = os próximos pontos dela, posta pelo passo) e não reto para além do
+   ponto em que a linha faz a curva. Antes, no fim de cada passada e no contorno de obstáculo marcado no controle, ele enxergava
+   o obstáculo que a linha já contornava, travava e inventava outro desvio. Sem linha (ida, volta, desvio em curso, voo manual,
+   telas do radar, XAG) olha reto, como sempre. É variável e não parâmetro porque o manual.js embrulha sondar(fx,fz). */
+let xgLinhaDoRadar=null;
+function sondar(fx,fz){
+  const d=drone.position;
+  const perto=colisores.filter(c=>Math.hypot(c.cx-d.x,c.cz-d.z)<c.raio+T50.radarAlcance+4);
+  const q=new THREE.Vector3();
+  const linha=xgLinhaDoRadar&&xgLinhaDoRadar.length?xgLinhaDoRadar:null;
+  let ox=d.x,oz=d.z,ux=fx,uz=fz,antes=0,resto=linha?Math.hypot(linha[0][0]-d.x,linha[0][1]-d.z):Infinity,prox=1;
+  /* o radar do T50 tem campo de visão vertical de ±45°: perto, varre também acima e abaixo */
+  for(let k=1.5;k<=T50.radarAlcance;k+=1.5){
+    /* passa para os trechos seguintes da linha até o ponto que fica a k metros por ela */
+    while(linha&&k-antes>resto){
+      if(prox>=linha.length)return null;          /* a linha acaba antes: não há voo além dela */
+      const a=linha[prox-1],b=linha[prox],l=Math.hypot(b[0]-a[0],b[1]-a[1]);
+      antes+=resto;ox=a[0];oz=a[1];resto=l;prox++;
+      if(l>1e-6){ux=(b[0]-a[0])/l;uz=(b[1]-a[1])/l}
+    }
+    q.set(ox+ux*(k-antes),d.y+.3,oz+uz*(k-antes));
+    /* com a estabilização ligada o relevo é acompanhado, não é obstáculo */
+    if(!P.estab&&alt(q.x,q.z)+.9>q.y)return {d:k,c:{nome:"o relevo",tipo:"relevo",topo:alt(q.x,q.z)+2,cx:q.x,cz:q.z,raio:6,
+      dica:"Com a Estabilização da altitude desligada, a altura é contada a partir da decolagem. O terreno subiu e a aeronave não."}};
+    const faixaV=k<=8?[0,-1.2,1.2]:[0];
+    for(const oy of faixaV){
+      q.y=d.y+.3+oy;
+      for(const c of perto){
+        if(V.desvioLat&&V.estado==="aplicando"&&c===V.desvioLat.obs)continue;     /* já está contornando este */
+        if(c.fio&&k>T50.alcanceFio)continue;
+        if(c.seca&&velHorizontal()>T50.velArvoreSeca)continue;   /* árvore seca: acima de 15 km/h o radar não a vê */
+        if(distColisor(c,q)<1.6)return {d:k,c};
+      }
+    }
+  }
+  return null;
+}
+
+function mostrarAlerta(titulo,texto,botoes,vermelho){
+  $("alTit").textContent=titulo;$("alTxt").textContent=texto;
+  $("alerta").classList.toggle("vermelho",!!vermelho);
+  $("alBts").innerHTML="";
+  (botoes||[]).forEach((b,i)=>{const el=document.createElement("button");el.textContent=b.txt;if(i===0)el.className="pri";
+    el.onclick=()=>{fecharAlerta();b.fn()};$("alBts").appendChild(el)});
+  $("alBts").hidden=!(botoes&&botoes.length);
+  $("alerta").hidden=false;
+}
+function fecharAlerta(){$("alerta").hidden=true}
+
+function iniciarRetorno(retomar){
+  V.retomar=retomar;V.estado="voltando";V.extra=0;V.desce=false;V.obsExtra=null;V.desvioLat=null;V.xgSobre=null;
+  V.freando=false;V.sonda=null;V.aguardaSubida=false;V.recuo=null;V.fase=null;fecharAlerta();
+}
+const pontoAtual=()=>({p:[drone.position.x,drone.position.z],i:V.i});
+
+function pairar(motivo,texto,botoes,vermelho){
+  if(V.estado!=="pairando")V.antesPairar=V.estado;
+  if(motivo!=="Obstáculo detectado")V.obs=null;
+  V.estado="pairando";V.aplicando=false;
+  mostrarAlerta(motivo,texto,botoes,vermelho);
+}
+
+/* virada entre passadas (18/11/2026): velocidade no ponto da curva e freio com que ela chega lá.
+   Depois de ver no site (Eduardo, 18/11/2026: "o drone precisa fazer as voltas mais suavemente e não dá pra notar muito visualmente a redução e
+   aceleração do drone, deixar isso mais suave"): o freio de chegada caiu de 2,5 para 1,5 m/s² (a 36 km/h começa a frear uns 28 m antes, e não 17);
+   na rota a velocidade muda sem tranco (XG_AC_SUAVE = aceleração e freio máximos, XG_TRANCO = quanto a aceleração pode mudar por segundo); e o
+   giro da aeronave na virada ficou mais lento (XG_GIRO_SUAVE, era 4). */
+const XG_VEL_CURVA=15/3.6,XG_FREIO_CURVA=1.5,XG_AC_SUAVE=1.9,XG_TRANCO=2.2,XG_GIRO_SUAVE=1.6;
+/* 18/11/2026 (Eduardo: "a virada de volta ta estranha ainda do xag"), pelo vídeo do controle em voo (IMG_5041.mov): o XAG quase
+   para no fim da passada (35 -> ~4 km/h em ~6 s), troca de faixa chegando a ~16 km/h, cai a ~9 e só então acelera (9 -> 36 em
+   ~4 s); a virada inteira leva de 12 a 16 s e o giro é lento. No simulador ele passava pelos cantos a 15 km/h girando 90 graus
+   em menos de 1 s (7 s no total). Estes valores só valem no voo do XAG (window.xgVooXag); o DJI continua como estava. */
+const XG_VEL_CURVA_XAG=6/3.6,XG_VEL_LIGA_XAG=16/3.6,XG_GIRO_XAG=0.9,XG_FREIO_XAG=1.1;
+/* 19/11/2026 (Eduardo, com o vídeo do P60 virando a volta: "os movimentos precisam ser suave, no simulador o drone vira a volta muito
+   seco"; e antes: "a volta ficou lenta de mais"): no voo do XAG a virada deixa de ser dois cantos de 90° quase parando. A aeronave sai
+   da passada em ARCO, sem parar, gira o rumo junto com a curva, inclina para dentro e entra na passada seguinte ainda em curva (a
+   meia-volta inteira leva uns 4 s, como no vídeo). O raio é metade da distância entre as passadas; a velocidade na curva sai do raio
+   (aceleração lateral `lat`: 10 a 12 km/h com passadas de 6,5 a 8 m) e ela chega freando a `freio` m/s². Na troca de faixa pulveriza
+   o começo e o fim da curva e fecha no meio: ali a ponta da faixa chegaria a menos de `folga` m do limite da lavoura (a passada acaba
+   MARGEM_BORDA antes dele) e molharia fora; a nota cobra "não aplicar fora do talhão". Só no voo do XAG (window.xgVooXag); o canto
+   que não dá arco (raio menor que `rmin`, meia-volta no mesmo lugar, trecho alto, desvio) fica como era. V.xgArco só guarda números
+   (o V é gravado a cada 5 s). */
+/* 19/11/2026, depois de ver no site (Eduardo: "o drone comeca liberar muito cedo pra liberar produto precisa deixar ele mais reto pra
+   comecar a pulverizar"): na curva de ENTRADA da passada os bicos ficam fechados (antes abriam com uns 50 graus ainda por virar) e,
+   acabada a curva, ainda esperam `abre` s (V.xgFecha), o tempo de o nariz terminar de alinhar. O nariz passa a acompanhar a curva
+   mais de perto (`giro` 5, era 3: chegava uns 17 graus atrasado) e continua nesse ritmo por `giroApos` s depois dela (voltava ao
+   giro lento e levava 2 s para alinhar). Assim, quando o produto volta a sair, a aeronave está reta na passada (uns 4 m depois do
+   começo dela). A curva de saída continua como estava. */
+/* 19/11/2026 (Eduardo: "deixa o xag de lado pq o p60 ficou bom quero que fac esse movimento suave nos outros modelos de drone
+   tambem" e "os desvio dos obstaculos tem que ser suaves como nesse das manobras deve funcionar para todos os modelos isso"):
+   a curva em arco passa a valer em TODAS as aeronaves (DJI, EAVision, Ceres e os outros XAG), com os mesmos números do P60; os
+   nomes XG_ARCO_XAG / xgArcoXag ficaram. E vale em mais cantos:
+   - canto ABERTO da rota (10 a 45 graus, como o contorno do obstáculo marcado no controle): antes passava reto, com um bico no
+     caminho; agora faz a curva, com o raio que a velocidade pede (não freia se couber). No contorno de obstáculo (dois trechos
+     sem aplicação) a curva corta no máximo `corte` m para dentro do canto, para não comer a folga do obstáculo;
+   - DESVIO pelo radar (V.desvioLat com obstáculo): os três cantos do desvio (sai de lado, passa, volta para a linha) viram
+     curvas, com o nariz girando devagar (`giroDesvio`: ela sai parada, de lado, e o nariz não precisa virar tudo). A retomada
+     (V.desvioLat sem obstáculo, do manual.js e do app_rcplus.js) continua indo ao ponto exato.
+   No DJI o radar acompanha a linha planejada: durante a curva da rota essa linha é o próprio arco (xgArcoXag devolve `linha`),
+   senão ele olharia reto para fora da lavoura no meio da virada e travaria à toa. */
+const XG_ARCO_XAG={lat:2.6,freio:1.5,rmax:9,rmin:1.5,vmin:1.6,giro:5,giroApos:1.2,rolo:2.4,folga:.75,abre:.25,corte:1,giroDesvio:1.8,desvioVel:1.4};
+/* p0 = o canto, p1 = o ponto seguinte, p2 = o depois dele (ou null); (px,pz) = onde a aeronave está; vCruz = velocidade de
+   cruzeiro; lin = comprimento do trecho que chega ao canto (0 = não se sabe); corte = quanto a curva pode entrar no canto (0 = livre) */
+function xgCantoXag(p0,p1,p2,px,pz,vCruz,lin,corte){
+  if(!p0||!p1)return null;
+  const ax=p0[0]-px,az=p0[1]-pz,la=Math.hypot(ax,az),bx=p1[0]-p0[0],bz=p1[1]-p0[1],lb=Math.hypot(bx,bz);
+  if(la<.2||lb<1)return null;
+  const c=(ax*bx+az*bz)/(la*lb);
+  if(c>.985||c<-.94)return null;   /* quase reto (menos de 10 graus) ou meia-volta no mesmo lugar (não dá arco) */
+  /* t = quanto antes do canto a curva começa: metade da ligação curta (a outra metade é da curva seguinte) */
+  const th=Math.acos(c),tg=Math.tan(th/2);
+  /* raio pedido: o que a velocidade de cruzeiro pede (curva aberta não freia), nunca menos que rmax; no contorno, o que o corte deixa */
+  let rAlvo=Math.max(XG_ARCO_XAG.rmax,vCruz*vCruz/XG_ARCO_XAG.lat);
+  if(corte>0)rAlvo=Math.min(rAlvo,corte/(1/Math.cos(th/2)-1));
+  let t=Math.min(lb<20&&p2?lb/2:lb*.45,rAlvo*tg);
+  if(lin>0)t=Math.min(t,lin/2);
+  return {la,lb,th,tg,t,ux:ax/la,uz:az/la,vx:bx/lb,vz:bz/lb};
+}
+/* 19/11/2026: o Eduardo mandou o registro de um voo real do P60 (16/11/2026, 22 viradas, 1 ponto por segundo; em
+   estudos/voo-real-p60-20261116) e, vista a comparação, respondeu "Aplicar os três". Valem só no voo do XAG (window.xgVooXag):
+   1. VIRADA: a curva em arco fica, mas com a velocidade do voo real. No meio de cada curva a aeronave passa a `vc` - medido: canto
+      de 63 graus a 7,7 km/h (vc63), de 118 graus a 4 km/h (vc118); o de 90 graus fica em 5,9 km/h - freando até lá a `freio` e
+      saindo a `acel`. No real: 28 -> 4,5 km/h em ~4 s, ligação a 10-13 km/h, volta a 28 em ~3 s; 11 a 12 s no total (a curva de
+      antes passava a 10 km/h e levava ~8 s).
+   2. BICOS: no voo real a pulverização não fecha na virada, só cai com a velocidade. Passa a valer a opção "Pulverize durante a
+      mudança de faixa" do aplicativo (P.xgMudanca, vinda do vinculo_xag.js): dos dois lados (padrão) = pulveriza a curva
+      inteira; somente bicos externos = idem, só o atomizador de fora da curva e meia vazão (V.xgSoLado); desligado = como estava
+      (fecha no meio, curva de entrada fechada, só abre reto). Com os bicos abertos a ponta da faixa passa do fim da passada.
+   3. DECOLAGEM E POUSO: sobe a `sobe` m/s (0 a 5 m em 4 a 5 s) e paira `pairaSai` s antes de sair; antes de descer paira
+      `pairaPousa` s e desce a `desce` m/s (o último metro já saía devagar). Antes: até 3 m/s subindo e 2,5 descendo, sem pausa. */
+/* 19/11/2026 (Eduardo, depois de testar): curvaVazao/curvaFaixa = quanto sobra da vazão e da faixa na troca de faixa com os bicos abertos;
+   apito = segundos apitando no chão antes de ligar as hélices; giroSai/giroAcel = giro ao sair da decolagem (rad/s e rad/s²) */
+const XG_REAL_XAG={freio:1.8,acel:1.7,vc63:2.15,vc118:1.1,sobe:1.4,desce:1.5,pairaSai:2,pairaPousa:2.5,curvaVazao:.03,curvaFaixa:.7,apito:1,giroSai:1.2,giroAcel:2.4,jogaMax:4.3,abreAntes:.35};   /* jogaMax: metros que a calda cai para trás no começo da aceleração; abreAntes: a vazão volta quando falta este ângulo (rad) da curva de entrada */
+function xgArcoXag(w,d,E){
+  const X=XG_ARCO_XAG,vel=r=>trava(Math.sqrt(X.lat*r),X.vmin,Math.max(X.vmin,E.vel)),RX=window.xgVooXag?XG_REAL_XAG:null;
+  /* D = desvio de obstáculo pelo radar em curso; a chave diz de que canto é o arco guardado (na rota, o índice; no desvio, negativo) */
+  const D=V.desvioLat&&V.desvioLat.obs?V.desvioLat:null,chave=D?-D.pontos.length:V.i;
+  let A=V.xgArco;
+  if(A&&A.i!==chave)A=V.xgArco=null;
+  if(!A){
+    let p0,p1,p2=null,lin=0,corte=0;
+    if(D){const L=D.pontos.concat([w.p]);p0=L[0];p1=L[1];p2=L[2]||null}
+    else{
+      const s=rota[V.i+1],s2=rota[V.i+2],a0=rota[V.i-1];
+      if(!s||s.alto)return null;
+      p0=w.p;p1=s.p;p2=s2&&!s2.alto?s2.p:null;
+      if(a0)lin=Math.hypot(w.p[0]-a0.p[0],w.p[1]-a0.p[1]);
+      if(!w.aplica&&!s.aplica)corte=X.corte;   /* contorno de obstáculo marcado no controle */
+    }
+    const g=xgCantoXag(p0,p1,p2,d.x,d.z,E.vel,lin,corte);
+    if(!g)return null;
+    const tE=Math.min(g.la,g.t),r=tE/g.tg;
+    if(r<X.rmin)return null;
+    /* a curva seguinte (a entrada da passada) pode ser mais fechada: já chega na velocidade dela */
+    let v=vel(r);
+    const g2=g.lb<20&&p2?xgCantoXag(p1,p2,null,p0[0]+g.vx*g.lb/2,p0[1]+g.vz*g.lb/2,E.vel,g.lb,corte):null;
+    if(g2){const r2=Math.min(g2.la,g2.t)/g2.tg;if(r2>=X.rmin)v=Math.min(v,vel(r2))}
+    /* voo do XAG: velocidade no MEIO da curva pelo ângulo do canto (só cantos de mais de 45 graus e fora do desvio de obstáculo);
+       na entrada da curva ainda falta frear meia curva (2 x freio x r x th/2) */
+    const vc=RX&&!D&&g.th>.8?Math.min(v,trava(RX.vc63-(g.th*180/Math.PI-63)/55*(RX.vc63-RX.vc118),.9,2.6)):null,fr=vc===null?X.freio:RX.freio;
+    const vIni=vc===null?v:Math.min(v,Math.sqrt(vc*vc+fr*r*g.th));
+    if(g.la>g.t+.05)return {v:Math.sqrt((vIni-.25)*(vIni-.25)+2*fr*(g.la-g.t))};   /* +5 cm: na emenda das duas curvas não fica um passo sem curva (e sem bico) */
+    const sg=g.ux*g.vz-g.uz*g.vx>0?1:-1,cx=d.x-g.uz*sg*r,cz=d.z+g.ux*sg*r,ant=rota[V.i-1],prox=rota[V.i+1];
+    A=V.xgArco={i:chave,cx,cz,r,sg,th:g.th,a0:Math.atan2(d.z-cz,d.x-cx),f:0,v,ex:p0[0]+g.vx*tE,ez:p0[1]+g.vz*tE,vx:g.vx,vz:g.vz,
+      /* pulveriza na curva de saída da passada (1) e na de entrada da seguinte (2, só em troca de faixa: contorno de obstáculo, não);
+         px,pz = o canto e ox,oz = o lado de fora (para onde a passada acabaria), usados para fechar no meio da curva */
+      ap:D?0:(w.aplica?1:(prox&&prox.aplica&&ant&&ant.aplica&&g.la<20?2:0)),px:p0[0],pz:p0[1],ox:w.aplica?g.ux:-g.vx,oz:w.aplica?g.uz:-g.vz,g:D?X.giroDesvio:X.giro,vc};
+  }
+  let f=A.sg*(Math.atan2(d.z-A.cz,d.x-A.cx)-A.a0);
+  while(f>Math.PI)f-=2*Math.PI;while(f<-Math.PI)f+=2*Math.PI;
+  A.f=Math.max(A.f,f);
+  if(A.th-A.f<.03){V.xgArco=null;if(A.g!==X.giroDesvio)V.xgGiroResto=X.giroApos;if(A.ap===2&&!(window.xgVooXag&&P.xgMudanca!=="off"))V.xgFecha=X.abre;return {fim:true,v:A.v}}
+  /* a aeronave persegue um ponto um pouco à frente em cima do arco (depois do fim dele, na reta de saída) */
+  const fa=A.f+Math.max(.45,Math.min(.7,A.r*.2))/A.r;
+  const alvo=fa<A.th?[A.cx+A.r*Math.cos(A.a0+A.sg*fa),A.cz+A.r*Math.sin(A.a0+A.sg*fa)]:[A.ex+A.vx*(fa-A.th)*A.r,A.ez+A.vz*(fa-A.th)*A.r];
+  V.xgRol=A.sg*Math.atan(V.v*V.v/(A.r*9.81));
+  /* a ponta de fora da faixa (meia largura além da aeronave, para fora da curva): quanto ela passa do fim da passada */
+  const rx=d.x-A.cx,rz=d.z-A.cz,rl=Math.hypot(rx,rz)||1,meia=larguraEfetiva()/2;
+  const passa=(d.x+rx/rl*meia-A.px)*A.ox+(d.z+rz/rl*meia-A.pz)*A.oz;
+  /* o caminho que falta da curva, para o radar que acompanha a linha (DJI): o ponto perseguido, o resto do arco e o fim dele */
+  const linha=[alvo];
+  for(let q=fa+.35;q<A.th;q+=.35)linha.push([A.cx+A.r*Math.cos(A.a0+A.sg*q),A.cz+A.r*Math.sin(A.a0+A.sg*q)]);
+  if(fa<A.th)linha.push([A.ex,A.ez]);
+  /* velocidade ao longo da curva no voo do XAG: a mínima (A.vc) no meio, freando até lá e acelerando depois */
+  let vArco=A.v;
+  if(RX&&A.vc!=null){const s=A.r*Math.abs(A.f-A.th/2);vArco=Math.min(A.v,Math.sqrt(A.vc*A.vc+2*(A.f<A.th/2?RX.freio:RX.acel)*s))}
+  /* bicos na curva: sem a opção do aplicativo (outros modelos) ou com ela desligada, só a curva de SAÍDA pulveriza, até a ponta da
+     faixa chegar perto do limite, e na de entrada espera ficar reto; com ela ligada (XAG) pulveriza a troca de faixa inteira */
+  const mud=window.xgVooXag?(P.xgMudanca==="off"||P.xgMudanca==="externos"?P.xgMudanca:"ambos"):"off";
+  let aplica=A.ap===1&&passa<=MARGEM_BORDA-X.folga;
+  if(mud!=="off"&&A.ap>0){const abre=A.ap===2&&A.th-A.f<XG_REAL_XAG.abreAntes;if(abre)V.xgJoga=1;if(!aplica&&!abre)V.xgNaCurva=1;aplica=true;if(mud==="externos")V.xgSoLado=A.sg}   /* 19/11: a vazão só cai onde os bicos fechavam (pontas das faixas alinhadas) */   /* lado de fora da curva (lado > 0 = esquerda) */
+  return {v:vArco,alvo,linha,aplica};
+}
+/* 19/11/2026 (Eduardo, depois de ver no ar: "quando a contagem inicia no caso no 1 deve apitar ai tem 2 e 3 quando apitar o badeco sai correndo"):
+   o aplicativo do XAG chama isto quando a contagem regressiva da decolagem começa (xag_parametros.js → vinculo_xag.js). Conta o apito (o
+   sons_dji.js toca) e avisa o auxiliar (equipe.js). Decolando sem contagem, quem apita é o passo, 1 s antes de ligar as hélices. */
+function xgApitar(){V.xgApitoN=(V.xgApitoN||0)+1;V.xgApitoEm=performance.now();if(window.xgEquipe&&xgEquipe.apitou){try{xgEquipe.apitou()}catch(e){}}}
+function passo(dt){
+  const d=drone.position;V.xgRol=0;V.xgSoLado=0;
+  /* 19/11/2026 (Eduardo, P60: "quando vira a volta reduz a vazao e isso precisa acontecer vizualmente e no chao tambem ... pintar menos o
+     chao e o efeito de agua quase sumir e a faixa tambem da uma reduzina"): V.xgCurvaK vai de 0 a 1 na troca de faixa do XAG com os bicos
+     abertos; com ele caem a vazão (abaixo), a faixa (V.xgFaixaK, pulverizacao.js) e a névoa (graficos.js) */
+  V.xgCurvaK=(V.xgCurvaK||0)+((V.xgNaCurva?1:0)-(V.xgCurvaK||0))*Math.min(1,dt*8);V.xgNaCurva=0;V.xgFaixaK=1-(1-XG_REAL_XAG.curvaFaixa)*V.xgCurvaK;V.xgFluxo=1;
+  /* 19/11/2026 (Eduardo: "quando o drone acelera ele joga o produto pra tras entao nao fica esse furo ali"): aceleração ao longo do voo, alisada;
+     no voo do XAG, aplicando e acelerando, a calda cai V.xgTras metros para trás do bico (pulverizacao.js) e fecha o começo da passada */
+  V.xgAc=(V.xgAc||0)+((V.v-(V.xgVant==null?V.v:V.xgVant))/Math.max(dt,1e-3)-(V.xgAc||0))*Math.min(1,dt*4);V.xgVant=V.v;
+  if(V.xgJoga&&(V.estado!=="aplicando"||V.v>P.vel*.97||V.xgAc<-.4))V.xgJoga=0;   /* só na saída do giro (V.xgJoga, posto em xgArcoXag), até chegar à velocidade */
+  V.xgTras=V.xgJoga?XG_REAL_XAG.jogaMax*trava((P.vel-V.v)/Math.max(1,P.vel)*1.4,0,1):0;   /* maior saindo devagar do giro, some chegando à velocidade */
+  if(V.estado!=="subindo"){V.xgApitou=false;V.xgApito=0}if(V.xgSai>0)V.xgSai-=dt;
+  if(V.estado!=="aplicando")V.xgArco=null;if(V.xgGiroResto>0)V.xgGiroResto-=dt;if(V.xgFecha>0)V.xgFecha-=dt;
+  if(V.estado==="caiu"){quedaPasso(dt);return}
+  if(V.estado==="em solo"||V.estado==="concluído")return;
+  V.tempo+=dt;
+  if(V.estado==="reabastecendo"){
+    V.espera-=dt;if(V.espera<=0){V.tan=T50.tanque;V.bat=100;V.avisoBat=false;V.recargas++;V.estado="subindo"}
+    return;
+  }
+  const E=efetivo();
+
+  /* 19/11/2026 (Eduardo, XAG: "quando o drone vai decolar ele da um apito antes de ligar a helice ... o apito acontece no 1 segundo"): mandada
+     decolar, a aeronave do XAG fica XG_REAL_XAG.apito (1 s) no chão, apitando e com as hélices paradas; só depois liga e sobe. V.xgApitoN conta
+     os apitos: o sons_dji.js toca e o auxiliar que estiver perto corre (equipe.js). */
+  if(window.xgVooXag&&V.estado==="subindo"&&d.y<=alt(d.x,d.z)+.05){
+    if(!V.xgApitou){V.xgApitou=true;if(performance.now()-(V.xgApitoEm||-1e9)<8000)V.xgApitoEm=-1e9;else{V.xgApito=XG_REAL_XAG.apito;xgApitar();V.xgApitoEm=-1e9}}   /* já apitou na contagem: liga direto */
+    if(V.xgApito>0){V.xgApito-=dt;V.vy=0;return}
+  }
+  let alvo=null,vDes=0,agl=E.altura,aplica=false,xgLinhaArco=null;
+  /* 23/10/2026, pedido do Eduardo (T25 em area dificil): na ida ao ponto inicial (comeco da tarefa ou volta depois de trocar a bateria)
+     a aeronave NAO sobe ate a altitude RTH para depois descer aos poucos: sobe so ate a altura programada, voa nela, alinha e comeca a
+     aplicar. A altitude RTH fica para o retorno e para os trechos de conexao altos (w.alto). */
+  if(V.estado==="subindo"){agl=E.altura}
+  else if(V.estado==="indo"){alvo=V.retomar.p;vDes=Math.min(10,Math.max(E.vel,6)*1.3);agl=E.altura}
+  else if(V.estado==="descendo"){agl=E.altura}
+  else if(V.estado==="aplicando"){
+    const w=rota[V.i];
+    if(!w){
+      if(P.modo==="facil")iniciarRetorno(null);
+      else pairar("Operação concluída","",[{txt:"Retornar à base",fn:()=>iniciarRetorno(null)}]);
+      return;
+    }
+    alvo=w.p;aplica=w.aplica;vDes=w.aplica?E.vel:Math.min(10,E.vel*1.2);
+    /* trecho de conexão na altitude RTH: sobe parado, cruza, desce parado */
+    if(w.alto){agl=P.rth;const falta=alturaAlvo(P.rth)-d.y;vDes=falta>1?0:Math.min(10,Math.max(E.vel,6)*1.3)}
+    /* para no ponto antes e depois de um trecho alto: não entra embaixo do obstáculo embalada */
+    if(w.alto||(rota[V.i+1]&&rota[V.i+1].alto))vDes=Math.min(vDes,Math.sqrt(2*T50.frenagem*Math.hypot(w.p[0]-d.x,w.p[1]-d.z))+.15);
+    else if(V.desce){vDes=0;if(Math.abs(alturaAlvo(E.altura)-d.y)<.6)V.desce=false}
+    /* 18/11/2026 (Eduardo: "o drone precisa reduzir muito a velocidade na hora de virar a volta tipo chegar a uns 15 de
+       velocidade"): antes de um ponto em que a rota vira (fim da passada, entrada da seguinte) a aeronave vem freando e
+       passa por ele a 15 km/h; a ligação curta entre duas passadas é feita nessa velocidade e, já na passada nova, ela
+       acelera de novo. Curva suave (contorno de obstáculo marcado no controle) não freia. */
+    /* 19/11/2026: no voo do XAG a virada é uma curva em arco (xgArcoXag, acima); o canto que não dá arco fica como era */
+    if(V.xgFecha>0)aplica=false;   /* acabou de entrar na passada: os bicos esperam o nariz alinhar (XG_ARCO_XAG.abre) */
+    const xgD=V.desvioLat&&V.desvioLat.obs?V.desvioLat:null;   /* desvio de obstáculo pelo radar: os cantos dele também viram curva */
+    const xgA=!w.alto&&!V.aguardaSubida&&!V.desce&&!V.xgSobre&&(xgD||(!V.desvioLat&&!(rota[V.i+1]&&rota[V.i+1].alto)))?xgArcoXag(w,d,E):null;
+    if(!xgA)V.xgArco=null;
+    if(xgA&&xgA.fim){if(xgD){xgD.pontos.shift();if(!xgD.pontos.length)V.desvioLat=null}else V.i++;return}
+    if(xgA){vDes=Math.min(vDes,xgA.v);if(xgA.alvo){alvo=xgA.alvo;aplica=xgA.aplica;xgLinhaArco=xgD?null:(xgA.linha||null)}}
+    else if(!V.desvioLat&&!w.alto){   /* 18/11/2026: vale também no XAG (Eduardo, no P60: "as viradas de volta tá brusca") */
+      const prox=rota[V.i+1],ant=rota[V.i-1],xgVc=window.xgVooXag?XG_VEL_CURVA_XAG:XG_VEL_CURVA,xgFr=window.xgVooXag?XG_FREIO_XAG:XG_FREIO_CURVA;
+      if(prox&&!prox.alto){
+        const ax=w.p[0]-d.x,az=w.p[1]-d.z,la=Math.hypot(ax,az),bx=prox.p[0]-w.p[0],bz=prox.p[1]-w.p[1],lb=Math.hypot(bx,bz);
+        /* mira um pouco abaixo dos 15 km/h: a velocidade suave chega atrasada em relação a esta conta */
+        if(la>.05&&lb>.05&&(ax*bx+az*bz)/(la*lb)<.7)vDes=Math.min(vDes,Math.sqrt((xgVc-.35)*(xgVc-.35)+2*xgFr*la));
+      }
+      if(!w.aplica&&ant&&Math.hypot(w.p[0]-ant.p[0],w.p[1]-ant.p[1])<20)vDes=Math.min(vDes,window.xgVooXag?XG_VEL_LIGA_XAG:XG_VEL_CURVA);
+    }
+    if(V.desvioLat){if(!(xgA&&xgA.alvo))alvo=V.desvioLat.pontos[0];aplica=false}
+    /* passando por cima (Pomar): no fio não pulveriza do ponto em que travou até
+       voltar à altura de trabalho do outro lado; lá ela para, desce e só então
+       segue reto na mesma linha. Na árvore passa pulverizando e desce andando. */
+    if(V.xgSobre){
+      if(V.xgSobre.fio)aplica=false;
+      if(V.xgSobre.passou){
+        if(V.xgSobre.fio)vDes=0;
+        if(Math.abs(alturaAlvo(E.altura)-d.y)<.6)V.xgSobre=null;
+      }
+    }
+    /* ponto repetido: já está nele */
+    if(!V.desvioLat&&!V.aguardaSubida&&!V.desce&&!w.alto&&Math.hypot(alvo[0]-d.x,alvo[1]-d.z)<.05){V.i++;return}
+  }
+  else if(V.estado==="voltando"){alvo=[BASE.x,BASE.z];agl=P.rth;
+    /* RTH: primeiro sobe até a altitude RTH, depois volta */
+    const falta=alturaAlvo(P.rth)-d.y;vDes=falta>1?0:Math.min(10,Math.max(E.vel,6)*1.3)}
+  else if(V.estado==="pousando"){agl=0}
+
+  if(alvo){
+    const dx=alvo[0]-d.x,dz=alvo[1]-d.z;
+    if(Math.hypot(dx,dz)>.3){
+      const yA=Math.atan2(-dz,dx);let dy=yA-V.yaw;
+      while(dy>Math.PI)dy-=2*Math.PI;while(dy<-Math.PI)dy+=2*Math.PI;
+      /* 19/11/2026 (Eduardo, P60: "quando o drone sobe do ponto ele vira muito seco precisa ser mais suave"): saindo da decolagem (XAG, V.xgSai)
+         o giro acelera e freia, no máximo a XG_REAL_XAG.giroSai, e a aeronave só anda depois de apontar para onde vai (segura a pausa) */
+      if(V.xgSai>0){
+        V.xgW=(V.xgW||0)+trava(trava(dy*2.2,-XG_REAL_XAG.giroSai,XG_REAL_XAG.giroSai)-(V.xgW||0),-XG_REAL_XAG.giroAcel*dt,XG_REAL_XAG.giroAcel*dt);
+        V.yaw+=trava(V.xgW*dt,-Math.abs(dy),Math.abs(dy));
+        if(Math.abs(dy)>.06)V.xgPausa=Math.max(V.xgPausa||0,.25);else if(!(V.xgPausa>0))V.xgSai=0;
+      }
+      else V.yaw+=dy*Math.min(1,dt*(V.estado==="aplicando"?(V.xgArco?V.xgArco.g||XG_ARCO_XAG.giro:V.xgGiroResto>0?XG_ARCO_XAG.giro:(window.xgVooXag?XG_GIRO_XAG:XG_GIRO_SUAVE)):4));
+    }
+  }
+
+  /* 19/11/2026, pelo voo real do P60: acabou de subir, paira antes de sair (V.xgPausa, posto onde o estado muda; o pouso usa a mesma espera) */
+  if(V.xgPausa>0){V.xgPausa-=dt;if(V.estado==="indo"||V.estado==="aplicando")vDes=0}
+  /* radar e desvio */
+  const move=["aplicando","indo","voltando"].includes(V.estado);
+  /* durante a ré e a subida sobre o obstáculo o radar não manda frear de novo:
+     antes, o fio ainda à frente travava a frenagem e ela dava a ré duas vezes */
+  if(P.desvio&&move&&!V.aguardaSubida){
+    const dist0=alvo?Math.hypot(alvo[0]-d.x,alvo[1]-d.z):0;
+    const sx=alvo&&dist0>.01?(alvo[0]-d.x)/dist0:V.dirx,sz=alvo&&dist0>.01?(alvo[1]-d.z)/dist0:V.dirz;
+    V.sondaT-=dt;if(V.sondaT<=0){
+      /* seguindo a rota do controle, o radar acompanha a linha planejada (ver sondar). O trecho alto (passa por cima na
+         altitude RTH) fica de fora: nele a aeronave sobe parada antes de cruzar. */
+      let linha=null;
+      if(V.estado==="aplicando"&&!V.desvioLat&&!window.xgVooXag&&rota[V.i]&&(alvo===rota[V.i].p||xgLinhaArco)){
+        linha=xgLinhaArco||[alvo];   /* na curva em arco a linha é o próprio arco */
+        if(!rota[V.i].alto)for(let j=V.i+1,comp=dist0;j<rota.length&&comp<T50.radarAlcance&&!rota[j].alto;j++){
+          comp+=Math.hypot(rota[j].p[0]-rota[j-1].p[0],rota[j].p[1]-rota[j-1].p[1]);linha.push(rota[j].p)}
+      }
+      xgLinhaDoRadar=linha;
+      try{V.sonda=sondar(sx,sz)}finally{xgLinhaDoRadar=null}
+      V.sondaT=.05;if(V.sonda)V.ultimoObs=V.sonda.c}
+    if(V.sonda){
+      const ob=V.sonda.c;
+      /* Pomar com prioridade vertical: árvore não trava a aeronave, ela sobe por cima */
+      if(sobePorCima(ob)&&!(V.xgSobre&&V.xgSobre.obs===ob)&&V.sonda.d<=distanciaParaSubir(ob))passarPorCimaSemParar(ob);
+      /* freia para parar com 2,5 m entre a frente da hélice e o obstáculo */
+      const folga=V.sonda.d-(T50.distSeguranca+T50.raioHelice);
+      vDes=Math.min(vDes,Math.sqrt(2*T50.frenagem*Math.max(0,folga)));
+      if(V.xgSobre&&V.xgSobre.obs===ob&&!V.xgSobre.fio&&!V.aguardaSubida){
+        /* só chega ao obstáculo depois de ganhar a altura (sobe a 3 m/s) */
+        const falta=Math.max(.1,alturaAlvo(E.altura)-d.y);
+        vDes=Math.min(vDes,Math.max(0,folga)*3/falta);
+      } else {
+        const parada=V.v*V.v/(2*T50.frenagem);
+        if(folga<=parada+.4){vDes=0;V.freando=true}
+      }
+    }
+    /* frenagem travada: sem isso, ao desacelerar a distância de parada encolhe,
+       a condição deixa de valer e a aeronave volta a acelerar rastejando */
+    if(V.freando)vDes=0;
+    /* 19/11/2026 (desvio suave): ainda freando, já abaixo de `desvioVel` m/s (5 km/h), tenta o contorno lateral e sai andando, sem a
+       parada completa na frente do obstáculo. Sem lado livre (ou em Montanhas, que sobe por cima) segue freando até parar, como antes. */
+    if(V.freando&&V.v>=.15&&V.v<XG_ARCO_XAG.desvioVel&&V.estado==="aplicando"&&P.terreno!=="montanha"){
+      const oCedo=V.sonda?V.sonda.c:V.ultimoObs;
+      if(oCedo&&tentarDesvioAutomatico(oCedo)){V.freando=false;V.obs=oCedo;return}
+    }
+    if(V.freando&&V.v<.15){
+      V.freando=false;const o=V.sonda?V.sonda.c:V.ultimoObs;V.obs=o;
+      /* fio: no Pomar passa por cima; em Planícies/Acima da água tenta a lateral e,
+         como o fio atravessa a linha de voo, normalmente trava ali */
+      if(o&&(V.estado==="aplicando"||P.terreno==="montanha")&&tentarDesvioAutomatico(o))return;
+      const incl=Math.atan(Math.abs(alt(drone.position.x+V.dirx*6,drone.position.z+V.dirz*6)-alt(drone.position.x,drone.position.z))/6)*180/Math.PI;
+      const porque=o&&o.tipo==="relevo"?" Com a Estabilização da altitude desligada, a altura é contada a partir da decolagem e o terreno à frente está mais alto que a aeronave."
+        :o&&o.fio?(P.terreno==="montanha"?" O desvio de obstáculos está desligado, então a aeronave não passou por cima do fio."
+          :" Em Planícies e Acima da água o desvio é só pela lateral. O fio atravessa a linha de voo e não deixa lado livre, então a aeronave trava e espera o operador. Para passar por cima automaticamente, use o cenário Colina/Pomar com prioridade de desvio vertical.")
+        :(P.terreno!=="montanha"&&incl>10?" Em encosta o modo Planícies pode falhar no desvio lateral — o manual recomenda Montanhas e pomares.":" O desvio automático não conseguiu contornar.");
+      /* a explicação vai para o relatório (V.xgPorque), não para a tela */
+      V.xgPorque="O radar parou a aeronave antes de "+(o?o.nome:"um obstáculo")+"."+porque;
+      pairar("Obstáculo detectado","",
+        [{txt:"Subir e passar por cima",fn:subirSobreObstaculo},{txt:"Retornar à base",fn:()=>iniciarRetorno(pontoAtual())}]);
+      return;
+    }
+  }
+
+  /* depois de mandar subir sobre um obstáculo, só avança quando já ganhou a altura */
+  /* 1) recua na mesma altura  2) sobe parado  3) só então segue a rota */
+  if(V.aguardaSubida){
+    alvo=V.recuo;aplica=false;
+    if(V.fase==="recuo"){vDes=1.5;if(Math.hypot(V.recuo[0]-d.x,V.recuo[1]-d.z)<.4){V.fase="subida";V.extra=V.extraPend}}
+    else{vDes=0;if(Math.abs(alturaAlvo(agl)-d.y)<.4){V.aguardaSubida=false;V.recuo=null;V.fase=null}}
+  }
+
+  /* velocidade e posição */
+  /* rota do DJI sem nada mandando frear forte (radar, fio, trecho alto, passar por cima): a velocidade muda devagar e sem tranco.
+     Fora disso vale o de sempre (freio de 4 m/s² e arrancada de 2,5 m/s²). */
+  const xgSuave=V.estado==="aplicando"&&!V.freando&&!V.sonda&&!V.aguardaSubida&&!V.desce&&!V.xgSobre&&
+    !(rota[V.i]&&rota[V.i].alto)&&!(rota[V.i+1]&&rota[V.i+1].alto);
+  if(xgSuave){
+    const e=vDes-V.v,aDes=Math.sign(e)*Math.min(XG_AC_SUAVE,Math.sqrt(2*XG_TRANCO*Math.abs(e)));
+    V.xgAc=(V.xgAc||0)+trava(aDes-(V.xgAc||0),-XG_TRANCO*dt,XG_TRANCO*dt);
+    V.v+=V.xgAc*dt;
+  } else {V.xgAc=0;V.v+=trava(vDes-V.v,-T50.frenagem*dt,2.5*dt)}
+  if(V.v<0)V.v=0;
+  if(alvo&&V.v>0){
+    const dist=Math.hypot(alvo[0]-d.x,alvo[1]-d.z),passoH=Math.min(dist,V.v*dt),ax=d.x,az=d.z;
+    const ux=(alvo[0]-d.x)/(dist||1),uz=(alvo[1]-d.z)/(dist||1);
+    d.x+=ux*passoH;d.z+=uz*passoH;
+    if(!V.aguardaSubida){V.dirx=ux;V.dirz=uz}   /* recuando: a frente continua sendo a frente */
+    if(aplica&&V.tan>0){
+      const ha=passoH*P.faixa/10000;
+      /* a bomba entrega no máximo 16 L/min: acima disso a dose cai */
+      const pedido=ha*P.vazao*(V.xgSoLado?.5:1)*(1-(1-XG_REAL_XAG.curvaVazao)*(V.xgCurvaK||0)),teto=T50.vazaoMaxLmin/60*dt,litros=Math.min(pedido,teto,V.tan);   /* só um atomizador: meia vazão */
+      V.tan-=litros;V.calda+=litros;V.aplicado+=ha*(litros/Math.max(pedido,1e-9));
+      V.vazaoAtual=litros/dt*60;V.subdose=pedido>teto*1.02;
+      /* 19/11/2026 (Eduardo, vendo o vídeo: "a nevua tava boa antes deixa como tava antes com vortex oque eu pedi é q quando o drone reduzir a
+         velocidade a nevua e o vortez somen ... somente durante a virada de volta do drone"): na velocidade programada a névoa é a de sempre (1);
+         ela só some quando a aeronave reduz para virar (abaixo de 95% da velocidade vai caindo, a 60% já não há) e volta ao acelerar */
+      /* 19/11/2026, depois de ele ver no site: "ta muito fraca essa nevua e eu ainda falei q quero da forma que era antes" / "mas quand vira a volta faz
+         igual como ta". A regra acima (névoa caindo com a velocidade) foi RETIRADA: V.xgFluxo fica em 1 e a névoa só some dentro do giro
+         (V.xgCurvaK, no graficos.js). Não ligar a névoa à velocidade de novo. */
+      pintarFaixa(ax,az,d.x,d.z,larguraEfetiva(),V.i);
+    } else V.vazaoAtual=0;
+    if(dist-passoH<.05&&!V.aguardaSubida){
+      if(V.estado==="aplicando"){ if(V.desvioLat){V.desvioLat.pontos.shift();if(!V.desvioLat.pontos.length)V.desvioLat=null} else {if(rota[V.i]&&rota[V.i].alto)V.desce=true;V.i++} }
+      else if(V.estado==="indo"){V.estado="descendo";V.i=V.retomar.i;V.retomar=null;V.v=0}
+      else if(V.estado==="voltando"){V.estado="pousando";V.v=0;if(window.xgVooXag)V.xgPausa=XG_REAL_XAG.pairaPousa}
+    }
+    if(V.xgSobre){if(!V.xgSobre.passou&&!V.aguardaSubida&&passouObstaculo(V.xgSobre)){V.extra=0;V.obsExtra=null;V.xgSobre.passou=true}}
+    else if(V.obsExtra&&Math.hypot(d.x-V.obsExtra.cx,d.z-V.obsExtra.cz)>V.obsExtra.raio+14){V.extra=0;V.obsExtra=null}
+  } else V.vazaoAtual=0;
+
+  /* altura */
+  let yAlvo=V.estado==="pousando"?alt(d.x,d.z):alturaAlvo(agl);
+  if(V.estado==="pousando"&&V.xgPausa>0)yAlvo=d.y;   /* voo do XAG: paira antes de descer para pousar */
+  if(V.aguardaSubida&&V.fase==="recuo")yAlvo=V.yRecuo;   /* recua na mesma altura */
+  /* com o desvio ligado o radar vê o chão: não desce abaixo de 1,5 m */
+  if(P.desvio&&V.estado!=="pousando"){
+    const piso=alt(d.x,d.z)+1.5;
+    if(yAlvo<piso&&!P.estab&&["aplicando","indo","voltando"].includes(V.estado)&&V.v>.2){
+      V.freando=true;V.ultimoObs={nome:"o relevo",tipo:"relevo",topo:alt(d.x,d.z)+3,cx:d.x,cz:d.z,raio:6};V.sonda=null;
+    }
+    yAlvo=Math.max(yAlvo,piso);
+  }
+  /* voo do XAG (voo real do P60): na decolagem sobe a 1,4 m/s e no pouso desce a 1,5 m/s; no resto do voo continua como era */
+  const xgTP=window.xgVooXag?XG_REAL_XAG:null,subida=xgTP&&V.estado==="subindo"?xgTP.sobe:3;
+  const vyDes=trava((yAlvo-d.y)*1.6,xgTP&&V.estado==="pousando"?-xgTP.desce:-2.5,subida);
+  V.vy+=trava(vyDes-V.vy,-6*dt,6*dt);d.y+=V.vy*dt;
+  if(V.estado==="subindo"&&Math.abs(yAlvo-d.y)<.3){V.estado=V.retomar?"indo":"aplicando";if(window.xgVooXag){V.xgPausa=XG_REAL_XAG.pairaSai;V.xgSai=8;V.xgW=0}}
+  if(V.estado==="descendo"&&Math.abs(yAlvo-d.y)<.3)V.estado="aplicando";
+  if(V.estado==="pousando"&&d.y-alt(d.x,d.z)<.05){
+    d.y=alt(d.x,d.z);V.vy=0;
+    if(V.retomar){V.estado="reabastecendo";V.espera=15}
+    else{V.estado="concluído";V.rodando=false;mostrarFim()}
+  }
+
+  /* colisão */
+  /* no mesmo passo em que pousa o estado já virou "reabastecendo"/"concluído": o chão não conta */
+  const ignoraChao=["pousando","reabastecendo","concluído","em solo"].includes(V.estado)||(V.estado==="subindo"&&d.y-alt(d.x,d.z)<1);
+  if(!ignoraChao&&d.y<alt(d.x,d.z)+.25){
+    cair({nome:"o relevo",dica:(V.estado==="indo"||V.estado==="voltando")&&!window.xgVooXag
+      ?"Na ida até o ponto de pulverização e na volta para a base a aeronave não acompanha o terreno: a altura é contada a partir do ponto de decolagem. O terreno subiu e a aeronave não."
+      :P.estab
+      ?"O terreno subiu mais rápido do que a aeronave conseguiu acompanhar. Em encosta, use o terreno Montanhas e pomares e reduza a velocidade — o manual recomenda no máximo 6° de inclinação a 3 m/s."
+      :"Com a Estabilização da altitude desligada, a altura é contada a partir do ponto de decolagem. O terreno subiu e a aeronave não."});
+    return;
+  }
+  const ponto=new THREE.Vector3(d.x,d.y+.4,d.z);
+  for(const c of colisores){
+    if(Math.hypot(c.cx-d.x,c.cz-d.z)>c.raio+3)continue;
+    if(distColisor(c,ponto)<1.3){cair(c);return}
+  }
+
+  /* bateria, tanque e ações automáticas */
+  const carga=V.tan/T50.tanque,autonomia=T50.autonomiaVazioMin-(T50.autonomiaVazioMin-T50.autonomiaCheioMin)*carga;
+  V.bat=Math.max(0,V.bat-dt/60*(100/autonomia));
+  if(V.estado==="aplicando"&&V.tan<=.05&&!P.xgMapeamento){
+    if(P.modo==="facil")iniciarRetorno(pontoAtual());
+    else pairar("Tanque de pulverização vazio","Não há mais carga líquida. Aterrisse e reabasteça",
+      [{txt:"Retornar para reabastecer",fn:()=>iniciarRetorno(pontoAtual())}]);
+  }
+  /* bateria fraca só age com a aeronave no ar e ainda trabalhando */
+  if(V.bat<=25&&!V.avisoBat&&["aplicando","indo","descendo","subindo","pairando"].includes(V.estado)){
+    V.avisoBat=true;
+    if(P.modo==="facil")iniciarRetorno(["aplicando","pairando","descendo"].includes(V.estado)?pontoAtual():V.retomar);
+    else mostrarAlerta("Bateria fraca","Bateria fraca. Retorne à base",
+      [{txt:"Retornar à base",fn:()=>iniciarRetorno(pontoAtual())}],true);
+  }
+  if(V.bat<=0)cair({nome:"falta de bateria",dica:"A bateria acabou no ar. No Modo padrão a bateria fraca só gera aviso — o operador precisa mandar a aeronave voltar."});
+  V.aplicando=aplica&&V.estado==="aplicando"&&V.v>.5&&V.tan>0;
+}
+
+/* Planícies e Acima da água desviam pela lateral; Montanhas desvia por cima */
+function tentarDesvioAutomatico(o){
+  const d=drone.position;
+  if(P.terreno==="montanha"){V.antesPairar=V.estado;subirSobreObstaculo();return true}
+  if(o.tipo==="relevo"||o.raio>8)return false;
+  const inclinacao=Math.atan(Math.abs(alt(d.x+V.dirx*6,d.z+V.dirz*6)-alt(d.x,d.z))/6)*180/Math.PI;
+  if(P.terreno!=="montanha"&&inclinacao>10)return false;
+  const fx=Math.cos(V.yaw),fz=-Math.sin(V.yaw),nx=-fz,nz=fx;
+  const afast=o.raio+T50.distSeguranca+T50.raioHelice+1;
+  /* contorna primeiro pelo lado em que a aeronave já está, para não cruzar na frente do obstáculo */
+  const lado=(d.x-o.cx)*nx+(d.z-o.cz)*nz,primeiro=lado<-.3?-1:1;
+  const lateralAtual=(d.x-o.cx)*nx+(d.z-o.cz)*nz;
+  const livre=q=>colisores.every(c=>c===o||Math.hypot(c.cx-q.x,c.cz-q.z)>c.raio+6||distColisor(c,q)>3);
+  const trechoLivre=(a,b)=>{const n=Math.ceil(Math.hypot(b[0]-a[0],b[1]-a[1])/1.5);
+    for(let k=0;k<=n;k++){const t=k/n;
+      const q=new THREE.Vector3(a[0]+(b[0]-a[0])*t,d.y+.3,a[1]+(b[1]-a[1])*t);
+      if(!livre(q)||distColisor(o,q)<T50.distSeguranca+T50.raioHelice)return false}
+    return true};
+  for(const s of [primeiro,-primeiro]){
+    const lado1=[d.x+nx*(afast*s-lateralAtual),d.z+nz*(afast*s-lateralAtual)];
+    const adiante=o.raio*2+T50.distSeguranca+2;
+    const lado2=[lado1[0]+fx*(Math.hypot(o.cx-d.x,o.cz-d.z)+adiante),lado1[1]+fz*(Math.hypot(o.cx-d.x,o.cz-d.z)+adiante)];
+    const depois=[lado2[0]+fx*14,lado2[1]+fz*14];
+    const aqui=[d.x,d.z];
+    if(trechoLivre(aqui,lado1)&&trechoLivre(lado1,lado2)&&trechoLivre(lado2,depois)){
+      /* 17/11/2026: passado o obstáculo, volta para a LINHA da rota (diagonal de 45°) e segue nela; antes ia do fim do
+         contorno direto para a ponta da passada, pulverizando numa diagonal fora da linha. Só na rota do DJI e quando a volta
+         cabe antes do fim do trecho; o XAG usa estes pontos do jeito dele (voo_xag.js). */
+      const pontos=[lado1,lado2],ao=Math.hypot(o.cx-d.x,o.cz-d.z)+adiante+Math.abs(afast*s-lateralAtual),w=rota[V.i];
+      if(!window.xgVooXag&&V.estado==="aplicando"&&w&&Math.hypot(w.p[0]-d.x,w.p[1]-d.z)>ao+1){
+        const volta=[d.x+fx*ao,d.z+fz*ao];
+        if(trechoLivre(lado2,volta))pontos.push(volta);
+      }
+      V.desvioLat={pontos,obs:o,p:lado2};V.sonda=null;V.sondaT=.3;
+      mostrarAlerta("Desviando pela lateral","O radar detectou "+o.nome+" e a aeronave está contornando pela "+(s>0?"esquerda":"direita")+".",null);
+      setTimeout(()=>{if($("alTit").textContent==="Desviando pela lateral")fecharAlerta()},2500);
+      return true;
+    }
+  }
+  return false;
+}
+function subirSobreObstaculo(){
+  const o=V.obs,d=drone.position,E=efetivo();
+  let topo=o?(o.tipo==="relevo"?o.topo:topoColisor(o)):d.y+4;
+  /* fio: a rede sobe em direção aos postes, então vale o ponto mais alto dela nos arredores */
+  if(o&&o.fio)for(const c of colisores)if(c.nome===o.nome&&Math.hypot(c.cx-d.x,c.cz-d.z)<30)topo=Math.max(topo,topoColisor(c));
+  const base=P.estab?alt(d.x,d.z)+E.altura:V.referencia+E.altura;
+  V.extraPend=Math.max(V.extra,topo-base+3.5);V.fase="recuo";V.yRecuo=d.y;
+  V.obsExtra=o&&o.fio?{cx:d.x,cz:d.z,raio:22}:(o&&o.cx!==undefined?o:{cx:d.x,cz:d.z,raio:4});V.aguardaSubida=true;
+  V.recuo=[d.x-V.dirx*5,d.z-V.dirz*5];   /* recua antes de subir, para não subir para dentro do fio */
+  V.xgSobre=marcarSobre(o);V.freando=false;
+  V.estado=V.antesPairar&&V.antesPairar!=="pairando"?V.antesPairar:"aplicando";
+  V.sonda=null;V.sondaT=.8;fecharAlerta();
+}
+/* Pomar com prioridade vertical (padrão): árvore e construção a aeronave passa
+   por cima sem parar e sem deixar de pulverizar. O fio não: nele ela trava,
+   dá ré e sobe (subirSobreObstaculo). */
+function sobePorCima(o){
+  return !!o&&!o.fio&&o.tipo!=="relevo"&&V.estado==="aplicando"&&P.terreno==="montanha"&&P.xgContornar!==false
+    &&!(typeof P.xgDesvioPref==="number"&&P.xgDesvioPref<50);
+}
+function extraSobre(o){
+  const d=drone.position,E=efetivo();
+  const base=P.estab?alt(d.x,d.z)+E.altura:V.referencia+E.altura;
+  return topoColisor(o)-base+3.5;
+}
+/* começa a subir só com a antecedência que a subida (~2,5 m/s) pede, e sempre
+   antes do ponto em que o radar mandaria frear */
+function distanciaParaSubir(o){
+  const h=Math.max(0,extraSobre(o)-V.extra);
+  return Math.max(4+V.v*h/2.5,T50.distSeguranca+T50.raioHelice+V.v*V.v/(2*T50.frenagem)+2);
+}
+function passarPorCimaSemParar(o){
+  V.extra=Math.max(V.extra,extraSobre(o));V.obsExtra=o;V.obs=o;V.ultimoObs=o;
+  V.xgSobre=marcarSobre(o);
+}
+/* onde termina a passagem por cima: 6 m (T50.distPosObstaculo) além do obstáculo.
+   Fio: distância à linha da rede no chão, com sinal (positiva do lado de cá). */
+function marcarSobre(o){
+  const d=drone.position,fx=V.dirx,fz=V.dirz;
+  if(o&&o.fio&&o.a&&o.b){
+    const l=Math.hypot(o.b.x-o.a.x,o.b.z-o.a.z)||1;
+    let nx=-(o.b.z-o.a.z)/l,nz=(o.b.x-o.a.x)/l;
+    if((d.x-o.a.x)*nx+(d.z-o.a.z)*nz<0){nx=-nx;nz=-nz}
+    return {fio:true,obs:o,ax:o.a.x,az:o.a.z,nx,nz,i0:V.i,cruzou:false,passou:false};
+  }
+  const c=o&&o.cx!==undefined?o:{cx:d.x+fx*4,cz:d.z+fz*4,raio:1};
+  return {fio:!!(o&&o.fio),obs:o,cx:c.cx,cz:c.cz,raio:c.raio||0,fx,fz,i0:V.i,passou:false};
+}
+function passouObstaculo(s){
+  const d=drone.position,alem=T50.distPosObstaculo;
+  if(s.ax!==undefined){
+    const lado=(d.x-s.ax)*s.nx+(d.z-s.az)*s.nz;
+    if(lado<0)s.cruzou=true;
+    /* rota que acaba antes do fio e vira: libera longe da rede depois da curva */
+    return Math.abs(lado)>=alem&&(s.cruzou||V.i>s.i0+1);
+  }
+  const frente=(d.x-s.cx)*s.fx+(d.z-s.cz)*s.fz;
+  return frente>=s.raio+alem||(V.i>s.i0&&Math.hypot(d.x-s.cx,d.z-s.cz)>s.raio+alem);
+}
+
+function cair(c){
+  V.estado="caiu";V.rodando=true;V.motivo=c;V.aplicando=false;
+  V.vqx=Math.cos(V.yaw)*V.v*.6;V.vqz=-Math.sin(V.yaw)*V.v*.6;V.vy=Math.min(V.vy,0);
+  fecharAlerta();
+}
+function quedaPasso(dt){
+  if(V.noChao)return;
+  const d=drone.position;
+  V.vy-=9.8*dt;d.y+=V.vy*dt;d.x+=V.vqx*dt;d.z+=V.vqz*dt;V.vqx*=.985;V.vqz*=.985;
+  inclina.rotation.z+=dt*2.1;inclina.rotation.x+=dt*1.2;
+  const chao=alt(d.x,d.z);
+  if(d.y<=chao+.2){
+    d.y=chao+.2;V.noChao=true;
+    for(let k=0;k<160;k++){const p=pv[proxP];proxP=(proxP+1)%NP;
+      p.x=d.x;p.z=d.z;p.y=chao+.3;const a=Math.random()*6.283,s=1+Math.random()*3;
+      p.vx=Math.cos(a)*s;p.vz=Math.sin(a)*s;p.vy=1+Math.random()*2.5;p.vida=1.2}
+    nevoa.material.color.set("#8b7355");
+    setTimeout(()=>{
+      $("qMotivo").textContent="Bateu em "+V.motivo.nome+".";
+      $("qLicao").textContent=V.motivo.dica||"";
+      $("queda").hidden=false;
+    },1100);
+  }
+}
+
+/* compara a pintura com o talhão de verdade */
+function coberturaReal(){
+  const T=TALHAO,ix0=(T.x0-PINT.x0)*COB_PX,iz0=(T.z0-PINT.z0)*COB_PX,ix1=ix0+T.larg*COB_PX,iz1=iz0+T.prof*COB_PX;
+  let dentro=0,tot=0,fora=0,dupla=0;
+  for(let y=0;y<COB_H;y++)for(let x=0;x<COB_W;x++){
+    const n=cobN[y*COB_W+x],noT=x>=ix0&&x<ix1&&y>=iz0&&y<iz1;
+    if(noT){tot++;if(n>0)dentro++;if(n>1)dupla++}else if(n>0)fora++;
+  }
+  return {pct:dentro/tot*100,sobrePct:dupla/tot*100,foraHa:fora/(COB_PX*COB_PX)/10000};
+}
+function mostrarFim(){
+  const areaT=TALHAO.larg*TALHAO.prof/10000,M=mapaAtual(),cob=coberturaReal();
+  let txt=(nomeOperador()?nomeOperador()+", a":"A")+" aeronave pousou na base. "+cen.nome+".";
+  const sf=situacaoFaixa();
+  if(!sf.fecha)txt+=" As faixas não fecharam: espaçamento de "+nf(sf.s,1)+" m com largura efetiva de "+nf(sf.L,1)+" m deixou "+nf(sf.falha,1)+" m sem produto entre cada passada.";
+  else if(sf.pctSobre>30)txt+=" Sobreposição alta: "+nf(sf.sobre,1)+" m de cada faixa recebe dose dobrada. Dá para abrir o espaçamento.";
+  if(cob.pct<90)txt+=" Ficou "+nf(100-cob.pct,0)+"% do talhão sem aplicação"+(M.obstaculos.length?" — parte é a margem em volta dos obstáculos marcados; o resto,":" —")+" confira se os pontos de limite foram marcados bem nos cantos.";
+  if(cob.foraHa>.1)txt+=" "+nf(cob.foraHa,2)+" ha foram aplicados fora do talhão.";
+  $("fTexto").textContent=txt;
+  $("fGrade").innerHTML=
+    '<div><span>Área aplicada</span><b>'+nf(V.aplicado,2)+' ha</b></div>'
+   +'<div><span>Área do talhão</span><b>'+nf(areaT,2)+' ha</b></div>'
+   +'<div><span>Área mapeada</span><b>'+nf(areaPoligono(M.limite)/10000,2)+' ha</b></div>'
+   +'<div><span>Cobertura do talhão</span><b>'+nf(cob.pct,0)+'%</b></div>'
+   +'<div><span>Sobreposição</span><b>'+nf(cob.sobrePct,0)+'%</b></div>'
+   +'<div><span>Largura efetiva / espaçamento</span><b>'+nf(larguraEfetiva(),1)+' / '+nf(P.faixa,1)+' m</b></div>'
+   +'<div><span>Calda usada</span><b>'+nf(V.calda,1)+' L</b></div>'
+   +'<div><span>Reabastecimentos</span><b>'+V.recargas+'</b></div>'
+   +'<div><span>Tempo de voo</span><b>'+mmss(V.tempo)+'</b></div>'
+   +'<div><span>Dose média</span><b>'+(V.aplicado>0?nf(V.calda/V.aplicado,1):"0,0")+' L/ha</b></div>';
+  $("fim").hidden=false;
+}
+
+/* ===================================================================
+   HUD, RADAR E CÂMERA
+   =================================================================== */
+const ROTULO={"em solo":"Em solo",subindo:"Decolando",indo:"Roteamento de conexão",descendo:"Descendo para a faixa",aplicando:"Tarefa em andamento",
+  voltando:"Retorno à base (RTH)",pousando:"Pousando",reabastecendo:"Reabastecendo",pairando:"Voo estacionário",caiu:"Aeronave perdida","concluído":"Concluído"};
+function hud(){
+  const d=drone.position;
+  $("tEstado").textContent=ROTULO[V.estado]||V.estado;
+  {const mp=P.modo==="facil"?"Modo fácil":"Modo padrão",ct=window.TPD_TRADUCOES||{},md=ct[mp]||[mp,mp],nm=ct[cen.nome]||[cen.nome,cen.nome],pt=mp+" · Rota · "+cen.nome;$("tModo").textContent=window.XG_TR?XG_TR.reg(pt,md[0]+" · Route · "+nm[0],md[1]+" · Ruta · "+nm[1]):pt}
+  const cls=(el,c)=>{el.className=c||""};
+  $("hBat").textContent=nf(V.bat,0)+"%";cls($("hBat"),V.bat<=15?"cr":V.bat<=25?"al":"");
+  $("hTan").textContent=nf(V.tan,1)+" L";cls($("hTan"),V.tan<3?"cr":V.tan<8?"al":"");
+  $("hVaz").textContent=nf(V.vazaoAtual||0,1)+" L/min";cls($("hVaz"),V.subdose&&V.aplicando?"al":"");
+  $("hVel").textContent=nf(V.v,1)+" m/s";
+  $("hAgl").textContent=nf(Math.max(0,d.y-alt(d.x,d.z)),1)+" m";
+  $("hApl").textContent=nf(V.aplicado,2)+" ha";
+}
+
+const rc=$("radar"),rg=rc.getContext("2d");
+function desenharRadar(){
+  const W=rc.width,H=rc.height,cx=W/2,cy=H/2,R=W*.36;
+  rg.clearRect(0,0,W,H);
+  rg.fillStyle="rgba(10,12,16,.72)";rg.beginPath();rg.arc(cx,cy,R+26,0,7);rg.fill();
+  /* setores: obstáculos ao redor, relativos à frente da aeronave */
+  if(P.desvio&&V.estado!=="em solo"){
+    const d=drone.position,SET=16,melhor=new Array(SET).fill(Infinity);
+    for(const c of colisores){
+      const dxz=Math.hypot(c.cx-d.x,c.cz-d.z)-c.raio;
+      if(dxz>T50.radarAlcance)continue;
+      if(c.seca&&velHorizontal()>T50.velArvoreSeca)continue;
+      const lim=c.fio?T50.alcanceFio:T50.radarAlcance;
+      const p=new THREE.Vector3(d.x,d.y+.3,d.z),dist=distColisor(c,p);
+      if(dist>lim)continue;
+      if(c.tipo!=="seg"&&(d.y>c.y1+4))continue;
+      let ang=Math.atan2(-(c.cz-d.z),c.cx-d.x)-V.yaw;
+      if(c.tipo==="seg"){tmpA.subVectors(c.b,c.a);tmpB.subVectors(p,c.a);const t=trava(tmpB.dot(tmpA)/tmpA.lengthSq(),0,1);
+        tmpA.multiplyScalar(t).add(c.a);ang=Math.atan2(-(tmpA.z-d.z),tmpA.x-d.x)-V.yaw}
+      let s=Math.round(((ang%(2*Math.PI))+2*Math.PI)%(2*Math.PI)/(2*Math.PI)*SET)%SET;
+      melhor[s]=Math.min(melhor[s],dist);
+    }
+    for(let s=0;s<SET;s++){
+      if(melhor[s]===Infinity)continue;
+      const dist=melhor[s],cor=dist<6?"#F04438":dist<15?"#F5A524":"#32D583";
+      const a0=-Math.PI/2-(s+.42)*(2*Math.PI/SET),a1=-Math.PI/2-(s-.42)*(2*Math.PI/SET);
+      rg.strokeStyle=cor;rg.lineWidth=12;rg.beginPath();rg.arc(cx,cy,R+11,a0,a1);rg.stroke();
+      if(s===0||dist<6){rg.fillStyle=cor;rg.font="600 22px Roboto Mono, monospace";rg.textAlign="center";
+        const am=(a0+a1)/2;rg.fillText(nf(dist,0),cx+Math.cos(am)*(R-20),cy+Math.sin(am)*(R-20)+8)}
+    }
+  }
+  rg.strokeStyle=P.desvio?"rgba(255,255,255,.35)":"#F04438";rg.lineWidth=P.desvio?2:5;
+  rg.beginPath();rg.arc(cx,cy,R,0,7);rg.stroke();
+  rg.strokeStyle="rgba(255,255,255,.12)";rg.lineWidth=1.5;rg.beginPath();rg.arc(cx,cy,R*.55,0,7);rg.stroke();
+  /* ponto de origem */
+  const d=drone.position,ah=Math.atan2(-(BASE.z-d.z),BASE.x-d.x)-V.yaw,dh=Math.hypot(BASE.x-d.x,BASE.z-d.z);
+  const rh=Math.min(R*.92,R*.2+dh/4);
+  rg.fillStyle="#F5A524";rg.font="700 24px Roboto, sans-serif";rg.textAlign="center";
+  rg.fillText("H",cx+Math.cos(-Math.PI/2-ah)*rh,cy+Math.sin(-Math.PI/2-ah)*rh+8);
+  /* aeronave apontando para cima */
+  rg.fillStyle="#fff";rg.beginPath();rg.moveTo(cx,cy-18);rg.lineTo(cx+13,cy+14);rg.lineTo(cx,cy+7);rg.lineTo(cx-13,cy+14);rg.closePath();rg.fill();
+  /* barra vertical: distância ao chão */
+  const agl=Math.max(0,d.y-alt(d.x,d.z)),bx=18,by0=H*.2,by1=H*.8;
+  rg.fillStyle="rgba(255,255,255,.15)";rg.fillRect(bx,by0,8,by1-by0);
+  const f=trava(agl/15,0,1);rg.fillStyle=agl<1.5?"#F04438":agl<2.5?"#F5A524":"#32D583";
+  rg.fillRect(bx,by1-(by1-by0)*f,8,(by1-by0)*f);
+  if(!P.desvio){rg.fillStyle="#F04438";rg.font="600 18px Roboto, sans-serif";rg.fillText("DESVIO OFF",cx,H-8)}
+}
+
+let seguir=true;const camPos=new THREE.Vector3(),camAlvo=new THREE.Vector3();
+function posCamera(instantaneo,dt){
+  if(modoMapa||telaInicial)return;
+  if(vista==="operador"){
+    const o=grupoOperador.position,d=drone.position;
+    let dx=d.x-o.x,dz=d.z-o.z;const l=Math.hypot(dx,dz);
+    if(l<.5){dx=Math.sin(grupoOperador.rotation.y);dz=Math.cos(grupoOperador.rotation.y)}else{dx/=l;dz/=l}
+    camPos.set(o.x-dx*1.45-dz*.7,o.y+1.68,o.z-dz*1.45+dx*.7);
+    camPos.y=Math.max(camPos.y,alt(camPos.x,camPos.z)+1.2);
+    /* olha para o drone, mas sem inclinar a ponto de o operador sair do quadro:
+       acima de ~12° o ombro some por baixo da tela */
+    const hz=Math.max(1,Math.hypot(d.x-camPos.x,d.z-camPos.z));
+    const subida=Math.min(d.y+.4-camPos.y,hz*Math.tan(12*Math.PI/180));
+    camAlvo.set(d.x,camPos.y+subida,d.z);
+    cam.fov=55;cam.updateProjectionMatrix();
+    if(instantaneo){cam.position.copy(camPos);orb.target.copy(camAlvo);return}
+    const k=1-Math.exp(-dt*4);cam.position.lerp(camPos,k);orb.target.lerp(camAlvo,Math.min(1,k*2));
+    return;
+  }
+  if(!seguir)return;
+  const d=drone.position,tx=-Math.cos(V.yaw),tz=Math.sin(V.yaw);
+  const oh=xgOrb.dist*Math.cos(xgOrb.el),oc=Math.cos(xgOrb.az)*oh,os=Math.sin(xgOrb.az)*oh;   /* órbita e zoom do aluno (xgOrb) */
+  camPos.set(d.x+tx*oc+tz*os,d.y+.5+xgOrb.dist*Math.sin(xgOrb.el),d.z+tz*oc-tx*os);
+  camPos.y=Math.max(camPos.y,alt(camPos.x,camPos.z)+1.6);
+  camAlvo.set(d.x,d.y+.5,d.z);
+  if(instantaneo){cam.position.copy(camPos);orb.target.copy(camAlvo);return}
+  if(xgOrb.mexendo||performance.now()<xgOrb.ate){   /* o aluno está girando ou dando zoom: a câmera é dele; só acompanha o deslocamento do drone */
+    cam.position.x+=camAlvo.x-orb.target.x;cam.position.y+=camAlvo.y-orb.target.y;cam.position.z+=camAlvo.z-orb.target.z;orb.target.copy(camAlvo);return}
+  const k=1-Math.exp(-dt*3.2*Math.max(1,V.mult));
+  cam.position.lerp(camPos,k);orb.target.lerp(camAlvo,Math.min(1,k*2.2));
+}
+
+/* ===================================================================
+   CONTROLES
+   =================================================================== */
+/* sem acelerar o tempo: o treino e sempre 1x (o botao fica escondido e sem efeito) */
+$("bVel").onclick=()=>{V.mult=1};
+$("bPausa").onclick=e=>{V.rodando=!V.rodando;e.target.textContent=V.rodando?"Pausar":"Continuar"};
+$("bRth").onclick=()=>{
+  if(["aplicando","indo","pairando","subindo","descendo"].includes(V.estado)){
+    iniciarRetorno(V.estado==="aplicando"||V.estado==="pairando"?pontoAtual():V.retomar);V.rodando=true;
+  }else if(V.estado==="manual"&&drone.position.y-alt(drone.position.x,drone.position.z)>=.3){
+    /* 24/10/2026: voo manual no ar tambem volta (antes so a rota voltava): o mesmo do "rth" do app (app_rcplus.js).
+       Guarda o ponto de interrupcao e volta pela altitude RTH; no chao nao faz nada. */
+    if(typeof xgGravarInterrupcao==="function")xgGravarInterrupcao();
+    V.xgFreio=false;iniciarRetorno(V.retomar);V.rodando=true;fecharAlerta();
+  }
+};
+$("bCen").onclick=()=>{V.rodando=false;$("bPausa").textContent="Continuar";abrirPainel()};
+$("qDenovo").onclick=()=>{reiniciarVoo();decolar()};
+$("qConfig").onclick=()=>{$("queda").hidden=true;reiniciarVoo();abrirPainel()};
+$("fDenovo").onclick=()=>{reiniciarVoo();decolar()};
+$("fCampos").onclick=()=>{$("fim").hidden=true;reiniciarVoo();abrirPainel()};
+
+function decolar(){
+  if(!rota.length){mostrarAlerta("Sem rota","O mapa não gerou nenhuma faixa. Confira os pontos de limite e o espaçamento de rota.",[{txt:"Ok",fn:()=>abrirPainel()}]);return}
+  V.retomar={p:rota[0].p,i:1};   /* sobe na altitude RTH e vai até o início da primeira faixa */
+  V.estado="subindo";V.rodando=true;V.xgApitou=false;V.xgApito=0;$("bPausa").textContent="Pausar";
+}
+
+/* verificação automática antes da tarefa */
+function abrirVerificacao(){
+  const E=efetivo(),M=mapaAtual(),area=areaPoligono(M.limite)/10000,litros=area*P.vazao;
+  const ha_s=P.faixa*E.vel/10000,lmin=ha_s*P.vazao*60;
+  $("vCampo").textContent=cen.nome+" · "+nf(area,2)+" ha · "+nf(litros,0)+" L de calda previstos";
+  const linhas=[
+    ["Mapa",(M.pronto?"Pronto · ":"")+M.limite.length+" pontos · "+M.obstaculos.length+" obstáculo"+(M.obstaculos.length===1?"":"s"),M.pronto?"al":"ok"],
+    ["Bateria","100%","ok"],["Tanque de pulverização","40,0 L","ok"],["RTK","FIX","ok"],
+    ["Altura acima das culturas",nf(E.altura,1)+" m"+(E.altura!==P.altura?" (limitada)":""),E.altura!==P.altura?"al":"ok"],
+    ["Velocidade",nf(E.vel,1)+" m/s"+(E.vel!==P.vel?" (limitada)":""),E.vel!==P.vel?"al":"ok"],
+    ["Vazão necessária",nf(lmin,1)+" L/min",lmin>T50.vazaoMaxLmin?"al":"ok"],
+    (sf=>["Faixa de aplicação",nf(sf.L,1)+" m em "+nf(sf.s,1)+" m · "+(sf.fecha?"fecha":"falha de "+nf(sf.falha,1)+" m"),sf.fecha?"ok":"al"])(situacaoFaixa()),
+    ["Altitude RTH",nf(P.rth,0)+" m","ok"],
+    ["Roteamento de conexão","Direto","ok"],
+    ["Desvio de obstáculos",P.desvio?"Ligado":"Desligado",P.desvio?"ok":"al"],
+    ["Terreno da tarefa",{planicie:"Planícies",montanha:"Montanhas e pomares",agua:"Acima da água"}[P.terreno],
+      P.terreno===cen.terrenoSugerido?"ok":"al"],
+  ];
+  $("vLista").innerHTML=linhas.map(l=>'<div class="check"><span class="n">'+l[0]+'</span><span class="r '+l[2]+'">'+l[1]+'</span></div>').join("")
+    +(lmin>T50.vazaoMaxLmin?'<p class="licao" style="margin-top:8px">A bomba do T50 entrega no máximo 16 L/min. Com essa combinação a dose real vai ficar abaixo de '+nf(P.vazao,0)+' L/ha. Reduza velocidade ou espaçamento.</p>':"");
+  $("vDesl").value=0;$("verif").hidden=false;
+}
+$("vDesl").addEventListener("input",e=>{
+  if(+e.target.value>=97){$("verif").hidden=true;e.target.value=0;reiniciarVoo();decolar()}
+});
+$("vDesl").addEventListener("change",e=>{if(+e.target.value<97)e.target.value=0});
+$("vCancel").onclick=()=>{$("verif").hidden=true;abrirPainel()};
+
+/* painel de campos */
+function abrirPainel(){$("painel").hidden=false;montarLista()}
+function atualizarMapaPainel(){
+  const M=mapaAtual(),el=$("mapaSt"),n=M?M.obstaculos.length:0;
+  if(!M){el.className="mapaSt vazio";el.textContent="Campo ainda não mapeado. Caminhe com o controle marcando os pontos, ou use o mapa pronto.";}
+  else{el.className="mapaSt";const ha=nf(areaPoligono(M.limite)/10000,2),pl=n===1?"":"s",pt=(M.pronto?"Mapa pronto · ":"Mapeado caminhando · ")+ha+" ha · "+M.limite.length+" pontos de limite · "+n+" obstáculo"+pl+" marcado"+pl;
+    el.textContent=window.XG_TR?XG_TR.reg(pt,(M.pronto?"Ready-made map · ":"Mapped by walking · ")+ha.replace(",",".")+" ha · "+M.limite.length+" boundary points · "+n+" obstacle"+pl+" marked",(M.pronto?"Mapa listo · ":"Mapeado caminando · ")+ha+" ha · "+M.limite.length+" puntos de límite · "+n+" obstáculo"+pl+" marcado"+pl):pt;}
+  $("bMapear").textContent=M&&!M.pronto?"Editar mapa caminhando":"Mapear caminhando";
+  $("iniciar").disabled=!M;
+}
+function montarLista(){
+  $("listaCen").innerHTML=CENARIOS.map(c=>
+    '<button data-c="'+c.id+'" aria-pressed="'+(c===cen)+'"><span class="t">'+c.nome
+    +' <span class="nv '+c.nivel[1]+'">'+c.nivel[0]+'</span></span><span class="d">'+c.desc+'</span></button>').join("");
+  $("listaCen").querySelectorAll("[data-c]").forEach(b=>b.onclick=()=>{
+    const c=CENARIOS.find(x=>x.id===b.dataset.c);if(c===cen)return;
+    construirCenario(c);reiniciarVoo();posCamera(true,0);montarLista();
+  });
+  atualizarMapaPainel();
+}
+function segmento(id,chave,ajuda){
+  const botoes=$(id).querySelectorAll("button");
+  const at=()=>{botoes.forEach(b=>b.setAttribute("aria-pressed",b.dataset.v===P[chave]));if(ajuda)ajuda()};
+  botoes.forEach(b=>b.onclick=()=>{P[chave]=b.dataset.v;at()});at();
+}
+/* tela de início */
+let telaInicial=true,angInicio=.6;
+/* o nome vem do cadastro do aluno (sessão do site); sem sessão, fica sem nome */
+const nomeOperador=()=>{
+  try{const s=JSON.parse(localStorage.getItem("tpd_sessao")||"null");return String((s&&s.aluno)||"").trim().slice(0,32)}catch(e){return ""}
+};
+{const o=$("olaOp"),n=nomeOperador();
+ if(n){const tx="Operador: "+n.replace(/\s+/g," ");o.textContent=window.XG_TR?XG_TR.reg(tx,"Operator: "+n.replace(/\s+/g," "),tx):tx;o.hidden=false}}
+function abrirInicio(){
+  telaInicial=true;V.rodando=false;
+  if(window.PAUSA_SIM) PAUSA_SIM.definirOperacao(false);
+  $("painel").hidden=true;$("inicio").hidden=false;document.body.classList.add("telaInicio");
+  orb.enabled=false;fecharAlerta();
+}
+function comecar(){
+  telaInicial=false;$("inicio").hidden=true;document.body.classList.remove("telaInicio");
+  aplicarVista();posCamera(true,0);abrirPainel();
+  if(window.PAUSA_SIM) PAUSA_SIM.definirOperacao(true);
+}
+/* câmera girando devagar em volta da base: operador, drone e camionete */
+function orbitarInicio(dt){
+  angInicio+=dt*.045;
+  const cx=BASE.x-1,cz=BASE.z+4,y=alt(cx,cz);
+  cam.position.set(cx+Math.sin(angInicio)*21,y+4.2,cz+Math.cos(angInicio)*21);
+  cam.position.y=Math.max(cam.position.y,alt(cam.position.x,cam.position.z)+1.5);
+  cam.lookAt(cx-2.5,y+1.4,cz);
+}
+$("bComecar").onclick=comecar;
+$("bInicio").onclick=abrirInicio;
+$("bVoltarDrones").onclick=function(){
+  /* o campo roda dentro do sim.html: quem troca de página é a janela de cima */
+  var alvo="/treinamento/conta/drones.html";
+  try{window.top.location.href=alvo;}catch(e){location.href=alvo;}
+};
+segmento("segModo","modo",()=>{$("ajModo").textContent=P.modo==="facil"
+  ?"A aeronave faz RTH sozinha quando o tanque esvazia, a bateria fica fraca ou a operação termina."
+  :"Com tanque vazio ou operação concluída a aeronave fica em voo estacionário. Bateria fraca é só aviso — quem decide voltar é o operador."});
+segmento("segTerreno","terreno",()=>{$("ajTerreno").textContent={
+  planicie:"Para áreas planas. Desvia de obstáculos pela lateral e para se não conseguir.",
+  montanha:"Para relevo ondulado e pomares. Desvia de obstáculos por cima. Em área plana pode subir demais perto de postes e árvores.",
+  agua:"Para voar sobre água. Desvia pela lateral."}[P.terreno]});
+const liga=(id,chave)=>{$(id).onclick=()=>{P[chave]=!P[chave];$(id).setAttribute("aria-pressed",P[chave])}};
+liga("tDesvio","desvio");liga("tEstab","estab");
+const faixa=(id,out,chave,un,dec)=>{const el=$(id),o=$(out);
+  const at=()=>{P[chave]=parseFloat(el.value);o.textContent=nf(P[chave],dec)+" "+un};el.oninput=at;at()};
+faixa("pAlt","oAlt","altura","m",1);faixa("pVel","oVel","vel","m/s",1);faixa("pFai","oFai","faixa","m",1);
+faixa("pVaz","oVaz","vazao","L/ha",0);faixa("pRth","oRth","rth","m",0);faixa("pGota","oGota","gota","μm",0);
+/* diagrama: três passadas vistas de cima, com a largura efetiva de cada uma */
+function desenharFaixas(){
+  const cv=$("cFaixa"),g=cv.getContext("2d"),W=cv.width,H=cv.height,sf=situacaoFaixa();
+  const vista=Math.max(sf.s*3+sf.L,sf.s*4),esc=W/vista,x0=W/2-sf.s*esc;
+  g.clearRect(0,0,W,H);g.fillStyle="#6f5c43";g.fillRect(0,0,W,H);
+  /* chão seco entre as faixas */
+  g.strokeStyle="rgba(0,0,0,.12)";g.lineWidth=2;for(let x=0;x<W;x+=14){g.beginPath();g.moveTo(x,0);g.lineTo(x,H);g.stroke()}
+  for(let k=-1;k<=3;k++){
+    const cx=x0+k*sf.s*esc;
+    g.fillStyle="rgba(38,29,18,.42)";g.fillRect(cx-sf.L/2*esc,0,sf.L*esc,H);
+    g.fillStyle="rgba(38,29,18,.38)";g.fillRect(cx-sf.L*.275*esc,0,sf.L*.55*esc,H);
+  }
+  /* emendas: falha em vermelho, sobreposição em azul */
+  for(let k=-1;k<=2;k++){
+    const meio=x0+(k+.5)*sf.s*esc;
+    if(!sf.fecha){g.fillStyle="rgba(240,68,56,.55)";g.fillRect(meio-sf.falha/2*esc,0,sf.falha*esc,H)}
+    else if(sf.sobre>.05){g.fillStyle="rgba(47,128,237,.35)";g.fillRect(meio-sf.sobre/2*esc,0,sf.sobre*esc,H)}
+  }
+  g.setLineDash([12,10]);g.strokeStyle="rgba(255,255,255,.85)";g.lineWidth=3;
+  for(let k=-1;k<=3;k++){const cx=x0+k*sf.s*esc;g.beginPath();g.moveTo(cx,0);g.lineTo(cx,H);g.stroke()}
+  g.setLineDash([]);
+  /* drone na passada do meio */
+  const dx=x0+sf.s*esc;g.fillStyle="#fff";g.beginPath();g.moveTo(dx,H*.3);g.lineTo(dx+16,H*.62);g.lineTo(dx,H*.52);g.lineTo(dx-16,H*.62);g.closePath();g.fill();
+  const E=efetivo();
+  if(window.XG_TR){const en=(x,d)=>nf(x,d).replace(",","."),a1=nf(sf.L,1),a2=nf(P.gota,0),a3=nf(E.altura,1);
+    XG_TR.reg("Largura efetiva ≈ "+a1+" m (gota "+a2+" μm a "+a3+" m).","Effective width ≈ "+en(sf.L,1)+" m (droplet "+a2+" μm at "+en(E.altura,1)+" m).","Ancho efectivo ≈ "+a1+" m (gota "+a2+" μm a "+a3+" m).");
+    if(sf.fecha&&sf.sobre>.05){const s=nf(sf.sobre,1),t=sf.pctSobre>30;XG_TR.reg("com "+s+" m de sobreposição"+(t?" — alta, gasta produto e dobra a dose.":"."),"with "+en(sf.sobre,1)+" m of overlap"+(t?" — high, wastes product and doubles the dose.":"."),"con "+s+" m de solapamiento"+(t?" — alta, gasta producto y duplica la dosis.":"."))}
+    if(!sf.fecha){const f=nf(sf.falha,1);XG_TR.reg(": "+f+" m sem produto entre cada passada. Diminua o espaçamento, suba um pouco ou use gota maior.",": "+en(sf.falha,1)+" m without product between each pass. Reduce the spacing, climb a little or use a larger droplet.",": "+f+" m sin producto entre cada pasada. Reduce el espaciado, sube un poco o usa una gota mayor.")}}
+  $("ajFaixa").innerHTML="Largura efetiva ≈ "+nf(sf.L,1)+" m (gota "+nf(P.gota,0)+" μm a "+nf(E.altura,1)+" m). "
+    +(sf.fecha
+      ?'<b class="ok">As faixas fecham</b>'+(sf.sobre>.05?" com "+nf(sf.sobre,1)+" m de sobreposição"+(sf.pctSobre>30?" — alta, gasta produto e dobra a dose.":"."):".")
+      :'<b class="al">As faixas não fecham</b>: '+nf(sf.falha,1)+" m sem produto entre cada passada. Diminua o espaçamento, suba um pouco ou use gota maior.");
+}
+for(const id of ["pAlt","pFai","pGota","pVel"])$(id).addEventListener("input",desenharFaixas);
+for(const id of ["tDesvio"])$(id).addEventListener("click",desenharFaixas);
+desenharFaixas();
+$("iniciar").onclick=()=>{if(!mapaAtual())return;$("painel").hidden=true;reiniciarVoo();abrirVerificacao()};
+$("bMapear").onclick=()=>{$("painel").hidden=true;entrarMapa()};
+$("bPronto").onclick=()=>{salvarMapa(mapaPronto());desenharMapa3D();atualizarMapaPainel()};
+montarLista();
+
+/* ===================================================================
+   MAPEAMENTO CAMINHANDO
+   =================================================================== */
+let modoMapa=false,ME=null,histMapa=[],tipoMarca="limite",fundoMapa=null;
+const grupoMapa=new THREE.Group();cena.add(grupoMapa);
+const andar={yaw:Math.PI,pitch:.32,dist:4.2,fase:0,amp:0,teclas:{},arrasta:null};
+const COR_LIM="#32D583",COR_OBS="#F04438";
+
+function desenharMapa3D(){
+  for(const o of [...grupoMapa.children]){grupoMapa.remove(o);o.traverse(x=>{if(x.geometry)x.geometry.dispose();if(x.material)x.material.dispose()})}
+  const M=modoMapa?ME:mapaAtual();if(!M)return;
+  const linha=(pts,fechado,cor)=>{
+    if(pts.length<2)return;const v=[],seq=fechado?pts.concat([pts[0]]):pts;
+    for(let i=0;i+1<seq.length;i++){const a=seq[i],b=seq[i+1],n=Math.max(1,Math.ceil(Math.hypot(b[0]-a[0],b[1]-a[1])/2));
+      for(let k=0;k<n;k++){const x=a[0]+(b[0]-a[0])*k/n,z=a[1]+(b[1]-a[1])*k/n;v.push(new THREE.Vector3(x,alt(x,z)+.3,z))}}
+    const u=seq[seq.length-1];v.push(new THREE.Vector3(u[0],alt(u[0],u[1])+.3,u[1]));
+    grupoMapa.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(v),new THREE.LineBasicMaterial({color:cor})));
+  };
+  const pino=(p,cor)=>{
+    const g=new THREE.Group(),y=alt(p[0],p[1]);
+    const h=new THREE.Mesh(new THREE.CylinderGeometry(.025,.025,1.1,6),new THREE.MeshBasicMaterial({color:"#e8eef0"}));h.position.y=.55;
+    const b=new THREE.Mesh(new THREE.SphereGeometry(.13,12,8),new THREE.MeshBasicMaterial({color:cor}));b.position.y=1.15;
+    g.add(h,b);g.position.set(p[0],y,p[1]);grupoMapa.add(g);
+  };
+  linha(M.limite,M.limite.length>=3,COR_LIM);if(modoMapa)M.limite.forEach(p=>pino(p,COR_LIM));
+  for(const o of M.obstaculos){
+    if(o.tipo==="circulo"){const pts=[];for(let k=0;k<40;k++){const a=k/40*2*Math.PI;pts.push([o.c[0]+Math.cos(a)*o.r,o.c[1]+Math.sin(a)*o.r])}
+      linha(pts,true,COR_OBS);if(modoMapa)pino(o.c,COR_OBS)}
+    else{linha(o.pts,true,COR_OBS);if(modoMapa)o.pts.forEach(p=>pino(p,COR_OBS))}
+  }
+  if(modoMapa&&ME.obsAtual.length){linha(ME.obsAtual,false,"#F5A524");ME.obsAtual.forEach(p=>pino(p,"#F5A524"))}
+}
+
+function entrarMapa(){
+  modoMapa=true;V.rodando=false;
+  const M=mapaAtual();
+  ME=M&&!M.pronto?{limite:M.limite.map(p=>p.slice()),obstaculos:JSON.parse(JSON.stringify(M.obstaculos)),obsAtual:[]}:{limite:[],obstaculos:[],obsAtual:[]};
+  histMapa=[];
+  const ox=BASE.x-5,oz=BASE.z+5; /* fora do raio de bloqueio de 6 m */grupoOperador.position.set(ox,alt(ox,oz),oz);
+  andar.yaw=Math.PI;grupoOperador.rotation.y=andar.yaw;andar.pitch=.32;andar.dist=4.2;andar.amp=0;andar.teclas={};
+  orb.enabled=false;
+  for(const id of ["topo","radar","bar"])$(id).hidden=true;
+  $("mapaUi").hidden=false;
+  let visto=false;try{visto=localStorage.getItem("t50_ajuda_mapa")==="1"}catch(e){}
+  $("mAjuda").hidden=visto;
+  aplicarVista();
+  definirTipo("limite");desenharMapa3D();
+}
+function sairMapa(){
+  modoMapa=false;ME=null;andar.amp=0;
+  pose(0);
+  const ox=BASE.x-5,oz=BASE.z+5; /* fora do raio de bloqueio de 6 m */grupoOperador.position.set(ox,alt(ox,oz),oz);grupoOperador.rotation.y=Math.PI*.85+Math.PI;
+  orb.enabled=true;
+  for(const id of ["topo","radar","bar"])$(id).hidden=false;
+  $("mapaUi").hidden=true;$("mFim").hidden=true;fecharAlerta();
+  aplicarVista();
+  desenharMapa3D();posCamera(true,0);
+}
+function definirTipo(v){
+  if(ME&&v!==tipoMarca&&ME.obsAtual.length){
+    if(ME.obsAtual.length>=3)fecharObstaculo();else{guardar();ME.obsAtual=[]}
+  }
+  tipoMarca=v;
+  $("mTipo").querySelectorAll("button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.v===v));
+  $("mRaio").hidden=v!=="circulo";$("mFechar").hidden=v!=="poligono";
+  const TRd=(p,e,s)=>window.XG_TR?XG_TR.reg(p,e,s):p;
+  $("mDica").textContent={
+    limite:"Pare em cima de cada canto do talhão e marque. Siga a borda em ordem, sem cruzar o meio.",
+    poligono:TRd("Caminhe em volta do obstáculo marcando pontos (no mínimo 3) e feche. A rota passa a "+MARGEM_OBS+" m dele.","Walk around the obstacle marking points (at least 3) and close it. The route stays "+MARGEM_OBS+" m away from it.","Camina alrededor del obstáculo marcando puntos (mínimo 3) y ciérralo. La ruta pasa a "+MARGEM_OBS+" m de él."),
+    circulo:TRd("Pare junto ao obstáculo, ajuste o raio para cobrir a copa ou a estrutura inteira e marque. A rota passa a "+MARGEM_OBS+" m além do raio.","Stand next to the obstacle, adjust the radius to cover the whole canopy or structure and mark it. The route stays "+MARGEM_OBS+" m beyond the radius.","Párate junto al obstáculo, ajusta el radio para cubrir toda la copa o la estructura y márcalo. La ruta pasa a "+MARGEM_OBS+" m más allá del radio.")}[v];
+  if(ME)desenharMapa3D();
+}
+const guardar=()=>{histMapa.push(JSON.stringify(ME));if(histMapa.length>200)histMapa.shift()};
+function marcarPonto(){
+  if(!modoMapa)return;
+  const o=grupoOperador.position,p=[Math.round(o.x*100)/100,Math.round(o.z*100)/100];
+  guardar();
+  if(tipoMarca==="limite")ME.limite.push(p);
+  else if(tipoMarca==="poligono")ME.obsAtual.push(p);
+  else ME.obstaculos.push({tipo:"circulo",c:p,r:+$("mRaioIn").value});
+  desenharMapa3D();
+}
+function fecharObstaculo(){
+  if(ME.obsAtual.length<3){mostrarAlerta("Obstáculo incompleto","Marque pelo menos 3 pontos em volta do obstáculo antes de fechar.",[{txt:"Ok",fn:()=>{}}]);return}
+  guardar();ME.obstaculos.push({tipo:"poligono",pts:ME.obsAtual});ME.obsAtual=[];desenharMapa3D();
+}
+function desfazer(){if(histMapa.length){ME=JSON.parse(histMapa.pop());desenharMapa3D()}}
+function concluirMapa(){
+  if(ME.obsAtual.length>=3)fecharObstaculo();else ME.obsAtual=[];
+  if(ME.limite.length<3){mostrarAlerta("Faltam pontos de limite","Marque pelo menos 3 pontos no contorno do talhão para fechar o campo.",[{txt:"Ok",fn:()=>{}}]);return}
+  const m={limite:ME.limite.map(p=>p.slice()),obstaculos:JSON.parse(JSON.stringify(ME.obstaculos))};salvarMapa(m);
+  const area=areaPoligono(m.limite)/10000;
+  $("mFimTxt").textContent=cen.nome+". A rota vai ser gerada dentro do contorno marcado, afastada "+nf(MARGEM_BORDA,1)+" m da borda e "+MARGEM_OBS+" m dos obstáculos.";
+  $("mFimGrade").innerHTML='<div><span>Área</span><b>'+nf(area,2)+' ha</b></div>'
+    +'<div><span>Perímetro</span><b>'+nf(perimetro(m.limite,true),0)+' m</b></div>'
+    +'<div><span>Pontos de limite</span><b>'+m.limite.length+'</b></div>'
+    +'<div><span>Obstáculos</span><b>'+m.obstaculos.length+'</b></div>';
+  $("mFim").hidden=false;
+}
+
+/* pernas: balanço procedural sobre a pose parada */
+function pose(fase){
+  const g=grupoOperador.children[0];if(!g||!g.userData.B)return;
+  const B=g.userData.B,R=g.userData.repouso,amp=andar.amp;
+  for(const n in R)B[n].quaternion.copy(R[n]);
+  if(amp<.01){g.userData.av.position.y=g.userData.avY;return}
+  grupoOperador.updateMatrixWorld(true);
+  const qf=g.getWorldQuaternion(new THREE.Quaternion());
+  const apontar=(osso,filho,dir)=>{
+    g.userData.av.updateMatrixWorld(true);
+    const a=new THREE.Vector3().setFromMatrixPosition(B[osso].matrixWorld),b=new THREE.Vector3().setFromMatrixPosition(B[filho].matrixWorld);
+    const alvo=new THREE.Vector3(...dir).normalize().applyQuaternion(qf);
+    const dq=new THREE.Quaternion().setFromUnitVectors(b.sub(a).normalize(),alvo);
+    const wq=B[osso].getWorldQuaternion(new THREE.Quaternion()),pq=B[osso].parent.getWorldQuaternion(new THREE.Quaternion());
+    B[osso].quaternion.copy(pq.invert().multiply(dq.multiply(wq)));
+  };
+  for(const [lado,f] of [["l",fase],["r",fase+Math.PI]]){
+    const a=amp*Math.sin(f),dobra=amp*1.5*Math.max(0,Math.cos(f));
+    apontar("thigh_"+lado,"calf_"+lado,[0,-Math.cos(a),Math.sin(a)]);
+    apontar("calf_"+lado,"foot_"+lado,[0,-Math.cos(a-dobra),Math.sin(a-dobra)]);
+  }
+}
+
+function bloqueiaCaminhada(x,z){
+  for(const c of colisores){
+    if(c.tipo==="seg"||Math.hypot(c.cx-x,c.cz-z)>c.raio+2)continue;
+    const chao=alt(c.cx,c.cz);
+    if(c.tipo==="cil"){
+      const r=c.tronco!==undefined?c.tronco+.25:(c.y0-chao<2?c.r+.3:-1),d=Math.hypot(x-c.x,z-c.z);
+      if(r>0&&d<r){const k=r/Math.max(.01,d);return [c.x+(x-c.x)*k,c.z+(z-c.z)*k]}
+    } else if(c.tipo==="caixa"){
+      const cs=Math.cos(-c.rot),sn=Math.sin(-c.rot),lx=(x-c.x)*cs-(z-c.z)*sn,lz=(x-c.x)*sn+(z-c.z)*cs;
+      const hx=c.sx/2-.2,hz=c.sz/2-.2;
+      if(Math.abs(lx)<hx&&Math.abs(lz)<hz){
+        let nx=lx,nz=lz;if(hx-Math.abs(lx)<hz-Math.abs(lz))nx=Math.sign(lx)*hx;else nz=Math.sign(lz)*hz;
+        const c2=Math.cos(c.rot),s2=Math.sin(c.rot);
+        return [c.x+nx*c2-nz*s2,c.z+nx*s2+nz*c2];
+      }
+    }
+  }
+  for(const a of acudes){const d=Math.hypot(x-a.x,z-a.z);if(d<a.r-1){const k=(a.r-1)/Math.max(.01,d);return [a.x+(x-a.x)*k,a.z+(z-a.z)*k]}}
+  return null;
+}
+
+function quadroMapa(dt){
+  const T=andar.teclas,o=grupoOperador.position;
+  const f=(T.KeyW||T.ArrowUp?1:0)-(T.KeyS||T.ArrowDown?1:0),l=(T.KeyD||T.ArrowRight?1:0)-(T.KeyA||T.ArrowLeft?1:0);
+  const correr=T.ShiftLeft||T.ShiftRight,vel=correr?4.5:1.6;
+  const fx=Math.sin(andar.yaw),fz=Math.cos(andar.yaw),rx=-Math.cos(andar.yaw),rz=Math.sin(andar.yaw);
+  let mx=fx*f+rx*l,mz=fz*f+rz*l;const n=Math.hypot(mx,mz);
+  if(n>0&&$("mFim").hidden){
+    mx/=n;mz/=n;
+    let nx=o.x+mx*vel*dt,nz=o.z+mz*vel*dt;
+    const bl=bloqueiaCaminhada(nx,nz);if(bl){nx=bl[0];nz=bl[1]}
+    o.x=trava(nx,-600,600);o.z=trava(nz,-650,450);
+    let dy=Math.atan2(mx,mz)-grupoOperador.rotation.y;
+    while(dy>Math.PI)dy-=2*Math.PI;while(dy<-Math.PI)dy+=2*Math.PI;
+    grupoOperador.rotation.y+=dy*Math.min(1,dt*10);
+    andar.fase+=vel*dt/(correr?1.9:1.35)*Math.PI;
+    andar.amp+=((correr?.62:.42)-andar.amp)*Math.min(1,dt*6);
+  } else andar.amp+=(0-andar.amp)*Math.min(1,dt*8);
+  o.y=alt(o.x,o.z);
+  pose(andar.fase);
+  /* câmera em terceira pessoa */
+  const cp=Math.cos(andar.pitch),sp=Math.sin(andar.pitch);
+  cam.position.set(o.x-fx*andar.dist*cp,o.y+1.45+andar.dist*sp,o.z-fz*andar.dist*cp);
+  cam.position.y=Math.max(cam.position.y,alt(cam.position.x,cam.position.z)+.4);
+  cam.lookAt(o.x,o.y+1.45,o.z);
+  hudMapa();desenharMiniMapa();
+}
+function hudMapa(){
+  const o=grupoOperador.position;
+  $("mPts").textContent=ME.limite.length;
+  $("mObs").textContent=ME.obstaculos.length+(ME.obsAtual.length?" +1":"");
+  $("mArea").textContent=nf(ME.limite.length>=3?areaPoligono(ME.limite)/10000:0,2)+" ha";
+  const ultObs=ME.obstaculos.length?ME.obstaculos[ME.obstaculos.length-1]:null;
+  const ult=tipoMarca==="limite"?ME.limite[ME.limite.length-1]:tipoMarca==="poligono"?ME.obsAtual[ME.obsAtual.length-1]:(ultObs&&ultObs.c);
+  $("mDist").textContent=ult?nf(Math.hypot(o.x-ult[0],o.z-ult[1]),1)+" m":"—";
+  $("mRaioOut").textContent=nf(+$("mRaioIn").value,1)+" m";
+  $("mFechar").disabled=ME.obsAtual.length<3;$("mDesfazer").disabled=!histMapa.length;
+}
+
+/* tela do controle: mapa de satélite simplificado, norte para cima */
+const mm=$("mMapa"),mg=mm.getContext("2d");
+const MM={cx:0,cz:-85,esc:540/310};
+const aTela=(x,z)=>[(x-MM.cx)*MM.esc+mm.width/2,(z-MM.cz)*MM.esc+mm.height/2];
+function montarFundoMapa(){
+  const c=document.createElement("canvas");c.width=mm.width;c.height=mm.height;const g=c.getContext("2d");
+  g.fillStyle="#4f5f37";g.fillRect(0,0,c.width,c.height);
+  let s=3;const r=()=>(s=(s*1664525+1013904223)>>>0)/4294967296;
+  for(let i=0;i<500;i++){g.fillStyle=r()>.5?"rgba(70,88,48,.5)":"rgba(95,110,64,.45)";g.beginPath();g.arc(r()*c.width,r()*c.height,2+r()*9,0,7);g.fill()}
+  const T=TALHAO,[a0,b0]=aTela(T.x0,T.z0),[a1,b1]=aTela(T.x0+T.larg,T.z0+T.prof);
+  g.fillStyle="#7a6547";g.fillRect(a0,b0,a1-a0,b1-b0);
+  g.strokeStyle="rgba(60,48,32,.55)";g.lineWidth=1;for(let x=a0;x<a1;x+=2.2){g.beginPath();g.moveTo(x,b0);g.lineTo(x,b1);g.stroke()}
+  for(const a of acudes){const [x,y]=aTela(a.x,a.z);g.fillStyle="#35606c";g.beginPath();g.arc(x,y,a.r*MM.esc,0,7);g.fill()}
+  for(const k of colisores){
+    if(k.tipo==="seg"){const [x1,y1]=aTela(k.a.x,k.a.z),[x2,y2]=aTela(k.b.x,k.b.z);g.strokeStyle="rgba(25,25,25,.6)";g.lineWidth=1;g.beginPath();g.moveTo(x1,y1);g.lineTo(x2,y2);g.stroke()}
+    else if(k.tipo==="caixa"){const [x,y]=aTela(k.x,k.z);g.save();g.translate(x,y);g.rotate(-k.rot);g.fillStyle="#a3a7aa";g.fillRect(-(k.sx-1)/2*MM.esc,-(k.sz-1)/2*MM.esc,(k.sx-1)*MM.esc,(k.sz-1)*MM.esc);g.restore()}
+    else{const [x,y]=aTela(k.x,k.z);g.fillStyle=k.tronco!==undefined?"rgba(28,52,26,.95)":"#c9cdd0";g.beginPath();g.arc(x,y,Math.max(2,k.r*MM.esc),0,7);g.fill()}
+  }
+  return c;
+}
+function desenharMiniMapa(){
+  if(!fundoMapa)fundoMapa=montarFundoMapa();
+  const W=mm.width,H=mm.height;mg.clearRect(0,0,W,H);
+  mg.drawImage(fundoMapa,0,0);
+  const poli=(pts,fechado,cor,preenche)=>{
+    if(!pts.length)return;mg.beginPath();pts.forEach((p,i)=>{const [x,y]=aTela(p[0],p[1]);i?mg.lineTo(x,y):mg.moveTo(x,y)});
+    if(fechado&&pts.length>=3){mg.closePath();if(preenche){mg.fillStyle=preenche;mg.fill()}}
+    mg.strokeStyle=cor;mg.lineWidth=3;mg.stroke();
+    for(const p of pts){const [x,y]=aTela(p[0],p[1]);mg.fillStyle="#fff";mg.beginPath();mg.arc(x,y,5,0,7);mg.fill();mg.fillStyle=cor;mg.beginPath();mg.arc(x,y,3.2,0,7);mg.fill()}
+  };
+  poli(ME.limite,true,COR_LIM,"rgba(50,213,131,.18)");
+  for(const o of ME.obstaculos){
+    if(o.tipo==="circulo"){const [x,y]=aTela(o.c[0],o.c[1]);mg.fillStyle="rgba(240,68,56,.25)";mg.strokeStyle=COR_OBS;mg.lineWidth=2.5;mg.beginPath();mg.arc(x,y,o.r*MM.esc,0,7);mg.fill();mg.stroke()}
+    else poli(o.pts,true,COR_OBS,"rgba(240,68,56,.25)");
+  }
+  poli(ME.obsAtual,false,"#F5A524");
+  const o=grupoOperador.position,[ox,oy]=aTela(o.x,o.z);
+  if(tipoMarca==="circulo"){mg.setLineDash([6,5]);mg.strokeStyle="#F5A524";mg.lineWidth=2;mg.beginPath();mg.arc(ox,oy,+$("mRaioIn").value*MM.esc,0,7);mg.stroke();mg.setLineDash([])}
+  {const [x,y]=aTela(BASE.x,BASE.z);mg.fillStyle="#F5A524";mg.font="700 20px Roboto, sans-serif";mg.textAlign="center";mg.fillText("H",x,y+7)}
+  mg.save();mg.translate(ox,oy);mg.rotate(-grupoOperador.rotation.y);
+  mg.fillStyle="rgba(47,128,237,.25)";mg.beginPath();mg.arc(0,0,16,0,7);mg.fill();
+  mg.fillStyle="#2F80ED";mg.strokeStyle="#fff";mg.lineWidth=2.5;mg.beginPath();mg.moveTo(0,12);mg.lineTo(8,-8);mg.lineTo(0,-3);mg.lineTo(-8,-8);mg.closePath();mg.fill();mg.stroke();mg.restore();
+  mg.fillStyle="rgba(10,12,16,.7)";mg.fillRect(W-44,10,34,34);mg.fillStyle="#fff";mg.font="600 18px Roboto, sans-serif";mg.textAlign="center";mg.fillText("N",W-27,34);
+}
+
+/* entradas do mapeamento */
+$("mTipo").querySelectorAll("button").forEach(b=>b.onclick=()=>{definirTipo(b.dataset.v);b.blur()});
+$("mMarcar").onclick=e=>{marcarPonto();e.currentTarget.blur()};
+$("mFechar").onclick=e=>{fecharObstaculo();e.currentTarget.blur()};
+$("mDesfazer").onclick=e=>{desfazer();e.currentTarget.blur()};
+$("mLimpar").onclick=e=>{e.currentTarget.blur();mostrarAlerta("Recomeçar o mapa?","Todos os pontos marcados agora serão apagados.",[{txt:"Apagar pontos",fn:()=>{guardar();ME.limite=[];ME.obstaculos=[];ME.obsAtual=[];desenharMapa3D()}},{txt:"Cancelar",fn:()=>{}}],true)};
+$("mSair").onclick=()=>{sairMapa();abrirPainel()};
+$("mConcluir").onclick=e=>{e.currentTarget.blur();concluirMapa()};
+$("mRaioIn").addEventListener("change",()=>$("mRaioIn").blur());
+$("mAjOk").onclick=()=>{$("mAjuda").hidden=true;try{localStorage.setItem("t50_ajuda_mapa","1")}catch(e){}};
+$("mFimOp").onclick=()=>{sairMapa();reiniciarVoo();abrirVerificacao()};
+$("mFimVolta").onclick=()=>{$("mFim").hidden=true;desenharMapa3D()};
+$("mFimCampos").onclick=()=>{sairMapa();abrirPainel()};
+addEventListener("keydown",e=>{
+  if(!modoMapa||!$("mFim").hidden)return;
+  andar.teclas[e.code]=true;
+  if(e.code==="Space"){e.preventDefault();if(!e.repeat)marcarPonto()}
+  else if(e.code==="Backspace"){e.preventDefault();desfazer()}
+  else if(e.code==="Enter"){e.preventDefault();if(tipoMarca==="poligono")fecharObstaculo()}
+  else if(e.code==="Digit1")definirTipo("limite");else if(e.code==="Digit2")definirTipo("poligono");else if(e.code==="Digit3")definirTipo("circulo");
+  if(["ArrowUp","ArrowDown","ArrowLeft","ArrowRight"].includes(e.code))e.preventDefault();
+});
+addEventListener("keyup",e=>{andar.teclas[e.code]=false;if(modoMapa&&e.code==="Space")e.preventDefault()});
+addEventListener("blur",()=>{andar.teclas={}});
+render.domElement.addEventListener("pointerdown",e=>{if(!modoMapa)return;andar.arrasta={x:e.clientX,y:e.clientY};render.domElement.setPointerCapture(e.pointerId)});
+render.domElement.addEventListener("pointermove",e=>{
+  if(!modoMapa||!andar.arrasta)return;
+  andar.yaw-=(e.clientX-andar.arrasta.x)*.006;andar.pitch=trava(andar.pitch+(e.clientY-andar.arrasta.y)*.004,-.15,1.25);
+  andar.arrasta={x:e.clientX,y:e.clientY};
+});
+addEventListener("pointerup",()=>{andar.arrasta=null});
+render.domElement.addEventListener("wheel",e=>{if(!modoMapa)return;e.preventDefault();andar.dist=trava(andar.dist*(e.deltaY>0?1.12:.89),1.8,30)},{passive:false});
+
+/* ===================================================================
+   VISÕES: DRONE, TELA DO CONTROLE (FPV) E OPERADOR
+   =================================================================== */
+let vista="drone";
+const camFpv=new THREE.PerspectiveCamera(62,1.57,.3,2500);
+/* retângulo da tela dentro do desenho do RC Plus (viewBox 2000×1440) */
+const RC={w:2000,h:1440,tx:398,ty:400,tw:1204,th:765};
+let rcCaixa={x:0,y:0,w:0,h:0,sx:0,sy:0,sw:0,sh:0};
+
+function caminhoRet(x,y,w,h,r){return "M"+(x+r)+","+y+"H"+(x+w-r)+"Q"+(x+w)+","+y+" "+(x+w)+","+(y+r)+"V"+(y+h-r)+"Q"+(x+w)+","+(y+h)+" "+(x+w-r)+","+(y+h)
+  +"H"+(x+r)+"Q"+x+","+(y+h)+" "+x+","+(y+h-r)+"V"+(y+r)+"Q"+x+","+y+" "+(x+r)+","+y+"Z"}
+function montarControleSvg(){
+  const buraco=caminhoRet(RC.tx,RC.ty,RC.tw,RC.th,16);
+  const corpo="M300,345H1700Q1765,345 1790,425L1905,565Q1948,615 1948,705V1335Q1948,1422 1862,1422H138Q52,1422 52,1335V705Q52,615 95,565L210,425Q235,345 300,345Z";
+  const manche=(cx,cy)=>'<circle cx="'+cx+'" cy="'+cy+'" r="128" fill="#34373b" stroke="#6a6e73" stroke-width="6"/>'
+    +'<circle cx="'+cx+'" cy="'+cy+'" r="100" fill="url(#gManche)"/>'
+    +'<circle cx="'+cx+'" cy="'+cy+'" r="58" fill="#1e2023" stroke="#3b3e42" stroke-width="4"/>'
+    +'<circle cx="'+cx+'" cy="'+cy+'" r="38" fill="none" stroke="#45484c" stroke-width="10" stroke-dasharray="4 5"/>';
+  const bt=(x,y,t)=>'<rect x="'+x+'" y="'+y+'" width="78" height="50" rx="11" fill="#2c2e31" stroke="#6d7075" stroke-width="3"/>'
+    +'<text x="'+(x+39)+'" y="'+(y+34)+'" text-anchor="middle" font-size="26" font-weight="700" fill="#e9ecef" font-family="Roboto,Arial">'+t+'</text>';
+  const redondo=(cx,cy,r,miolo,cls,rot)=>'<g class="'+(cls||"")+'"'+(rot?' role="button" aria-label="'+rot+'" tabindex="0"':'')+'><circle cx="'+cx+'" cy="'+cy+'" r="'+r+'" fill="#2a2c2f" stroke="#72767b" stroke-width="5"/>'+miolo+'</g>';
+  let pontos="";for(let i=0;i<9;i++){pontos+='<circle cx="'+(588+i*26)+'" cy="1257" r="5" fill="#1f2124"/><circle cx="'+(1202+i*26)+'" cy="1257" r="5" fill="#1f2124"/>'}
+  return '<svg viewBox="0 0 2000 1440" preserveAspectRatio="none" aria-hidden="false">'
+   +'<defs><linearGradient id="gCorpo" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#686c71"/><stop offset=".55" stop-color="#55595e"/><stop offset="1" stop-color="#43464a"/></linearGradient>'
+   +'<radialGradient id="gManche" cx=".45" cy=".4" r=".7"><stop offset="0" stop-color="#3a3d41"/><stop offset="1" stop-color="#17191b"/></radialGradient></defs>'
+   +'<rect x="318" y="8" width="88" height="345" rx="16" fill="#2a2c2f"/><rect x="1594" y="8" width="88" height="345" rx="16" fill="#2a2c2f"/>'
+   +'<circle cx="362" cy="22" r="6" fill="#111"/><circle cx="1638" cy="22" r="6" fill="#111"/>'
+   +'<path fill-rule="evenodd" fill="url(#gCorpo)" d="'+corpo+buraco+'"/>'
+   +'<path fill-rule="evenodd" fill="#3b3e42" d="'+caminhoRet(378,382,1244,803,30)+buraco+'"/>'
+   +'<rect x="640" y="334" width="170" height="24" rx="8" fill="#4a4d51"/><rect x="832" y="334" width="165" height="24" rx="8" fill="#4a4d51"/>'
+   +'<rect x="1003" y="334" width="165" height="24" rx="8" fill="#4a4d51"/><rect x="1184" y="334" width="170" height="24" rx="8" fill="#4a4d51"/>'
+   +manche(230,810)+manche(1770,810)
+   +redondo(322,610,36,'<path d="M300,590l44,40M344,590l-44,40" stroke="#d6d9dc" stroke-width="6"/>')
+   +'<rect x="238" y="508" width="44" height="34" rx="8" fill="#232527"/>'
+   +'<rect x="1718" y="528" width="70" height="30" rx="10" fill="#4a4d51" transform="rotate(25 1753 543)"/>'
+   +'<g class="rcbt" id="rcPausa" role="button" aria-label="Pausa" tabindex="0"><circle cx="1845" cy="614" r="40" fill="#e8642c" stroke="#9e3f14" stroke-width="5"/><rect x="1830" y="596" width="9" height="36" fill="#fff"/><rect x="1851" y="596" width="9" height="36" fill="#fff"/></g>'
+   +bt(282,955,"L1")+bt(282,1025,"L2")+bt(282,1095,"L3")+bt(1642,955,"R1")+bt(1642,1025,"R2")+bt(1642,1095,"R3")
+   +redondo(188,1050,40,'<path d="M198,1030l-20,20l20,20" fill="none" stroke="#e9ecef" stroke-width="8" stroke-linecap="round"/>')
+   +'<circle cx="1810" cy="1050" r="46" fill="#1d1f22" stroke="#5a5e63" stroke-width="5"/><circle cx="1810" cy="1050" r="26" fill="#2c2f33"/>'
+   +'<g class="rcbt" id="rcRth" role="button" aria-label="Retorno à base" tabindex="0"><circle cx="320" cy="1258" r="46" fill="#2a2c2f" stroke="#72767b" stroke-width="5"/><text x="320" y="1270" text-anchor="middle" font-size="40" font-weight="700" fill="#e9ecef" font-family="Roboto,Arial">H</text><path d="M290,1278q30,26 60,0" fill="none" stroke="#e9ecef" stroke-width="6"/></g>'
+   +redondo(1680,1258,46,'<path d="M1662,1240a28,28 0 1,0 36,0" fill="none" stroke="#e9ecef" stroke-width="7" stroke-linecap="round"/><path d="M1680,1228v30" stroke="#e9ecef" stroke-width="7" stroke-linecap="round"/>')
+   +'<rect x="462" y="1228" width="1076" height="194" rx="14" fill="#4b4e52"/>'+pontos
+   +'<rect x="918" y="1177" width="12" height="20" rx="3" fill="#2a2c2f"/>'
+   +[980,1010,1040,1070].map(x=>'<rect x="'+x+'" y="1177" width="12" height="20" rx="3" fill="#2a2c2f"/>').join("")
+   +'</svg>';
+}
+$("vCtrlRc").innerHTML=montarControleSvg();
+
+function layoutControle(){
+  const W=innerWidth,H=innerHeight,livre=H-64;
+  let w=Math.min(W*.96,livre*RC.w/RC.h),h=w*RC.h/RC.w;
+  const x=(W-w)/2,y=Math.max(6,(livre-h)/2);
+  const sx=x+RC.tx/RC.w*w,sy=y+RC.ty/RC.h*h,sw=RC.tw/RC.w*w,sh=RC.th/RC.h*h;
+  rcCaixa={x,y,w,h,sx,sy,sw,sh};
+  Object.assign($("vCtrlRc").style,{left:x+"px",top:y+"px",width:w+"px",height:h+"px"});
+  Object.assign($("tela").style,{left:sx+"px",top:sy+"px",width:sw+"px",height:sh+"px",fontSize:Math.max(9,sw/64)+"px"});
+  const m=$("rMapa");m.width=Math.round(sw*.3*devicePixelRatio);m.height=Math.round(sh*.34*devicePixelRatio);
+  camFpv.aspect=sw/sh;camFpv.updateProjectionMatrix();
+}
+addEventListener("resize",layoutControle);layoutControle();
+
+function definirVista(v){
+  if(v==="drone"&&vista==="drone"){xgOrb.az=XG_ORB0.az;xgOrb.el=XG_ORB0.el;xgOrb.dist=XG_ORB0.dist}   /* "Drone" de novo: a câmera volta para trás dele */
+  vista=v;seguir=v==="drone";
+  $("vistas").querySelectorAll("button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.v===v));
+  if(v!=="operador"){cam.fov=55;cam.updateProjectionMatrix()}
+  aplicarVista();
+  posCamera(true,0);
+}
+function aplicarVista(){
+  const ctrl=vista==="controle"&&!modoMapa;
+  if(!modoMapa)orb.enabled=vista!=="operador";
+  $("vCtrl").hidden=!ctrl;
+  if(!modoMapa){$("topo").hidden=ctrl;$("radar").hidden=ctrl}
+  $("vOpRot").hidden=true;
+}
+$("vistas").querySelectorAll("button").forEach(b=>b.onclick=()=>{definirVista(b.dataset.v);b.blur()});
+addEventListener("keydown",e=>{
+  if(modoMapa||e.target.tagName==="INPUT")return;
+  if(e.code==="KeyC"){const ord=["drone","controle","operador","livre"];definirVista(ord[(ord.indexOf(vista)+1)%ord.length])}
+});
+/* vista do operador sem zoom: é o que a pessoa enxerga de verdade, e o zoom tirava o operador da tela */
+
+/* botões do desenho: pausa (freia e para) e RTH */
+function pausarPeloControle(){
+  if(!["aplicando","indo","voltando","descendo","subindo"].includes(V.estado))return;
+  const antes=V.estado;
+  pairar("Pausado pelo controle","A aeronave freou e está em voo estacionário. No T50 o botão de pausa interrompe a tarefa na hora.",
+    [{txt:"Continuar tarefa",fn:()=>{V.estado=antes;fecharAlerta()}},{txt:"Retornar à base",fn:()=>iniciarRetorno(antes==="aplicando"?pontoAtual():V.retomar)}]);
+}
+$("rcPausa").addEventListener("click",pausarPeloControle);
+/* RTH do desenho (24/10/2026): como no aparelho, so SEGURAR 1,5 s inicia a volta (um toque curto nao faz nada). O circulo
+   fica laranja enquanto segura. O clique sem toque antes (controle 3D do Air 2S, via aoBotao) continua agindo na hora. */
+(function(){
+  const RTH_MS=1500,bt=$("rcRth"),aro=bt.querySelector("circle");
+  let rel=null,toque=false;
+  const cor=c=>{if(aro)aro.setAttribute("stroke",c)};
+  const parar=()=>{clearTimeout(rel);rel=null;cor("#72767b")};
+  const apertar=()=>{
+    if(rel!==null)return;
+    cor("#e8642c");
+    rel=setTimeout(()=>{rel=null;cor("#72767b");$("bRth").click()},RTH_MS);
+  };
+  const soltou=()=>{parar();setTimeout(()=>{toque=false},400)};
+  bt.addEventListener("pointerdown",e=>{
+    if(e.pointerType==="mouse"&&e.button!==0)return;
+    e.preventDefault();toque=true;
+    try{bt.setPointerCapture(e.pointerId)}catch(_){/* sem captura */}
+    apertar();
+  });
+  bt.addEventListener("pointerup",soltou);
+  bt.addEventListener("pointercancel",soltou);
+  bt.addEventListener("click",()=>{if(!toque)$("bRth").click()});
+  bt.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();if(!e.repeat)apertar()}});
+  bt.addEventListener("keyup",e=>{if(e.key==="Enter"||e.key===" ")parar()});
+  bt.addEventListener("blur",parar);
+})();
+$("rcPausa").addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();$("rcPausa").dispatchEvent(new Event("click"))}});
+
+/* câmera FPV do nariz do T50, levemente inclinada para baixo */
+function atualizarFpv(){
+  const d=drone.position,fx=Math.cos(V.yaw),fz=-Math.sin(V.yaw);
+  camFpv.position.set(d.x+fx*1.25,d.y+.25,d.z+fz*1.25);
+  camFpv.up.set(0,1,0);
+  camFpv.lookAt(d.x+fx*12,d.y+.25-4.2,d.z+fz*12);
+  camFpv.rotateZ(-inclina.rotation.z*.3);
+}
+
+/* app dentro da tela do controle */
+const tm=$("rMapa"),tg=tm.getContext("2d");
+function hudControle(){
+  const d=drone.position,E=efetivo();
+  $("rEstado").textContent=ROTULO[V.estado]||V.estado;
+  $("rModo").textContent=(P.modo==="facil"?"Modo fácil":"Modo padrão")+" · Rota";
+  $("rBat").textContent=nf(V.bat,0)+"%";$("rBat").className=V.bat<=15?"cr":V.bat<=25?"al":"";
+  $("rTan").textContent=nf(V.tan,1)+" L";$("rTan").className=V.tan<3?"cr":V.tan<8?"al":"";
+  $("rAgl").textContent=nf(Math.max(0,d.y-alt(d.x,d.z)),1)+" m";
+  $("rVel").textContent=nf(V.v,1)+" m/s";
+  $("rVaz").textContent=nf(V.vazaoAtual||0,1)+" L/min";
+  $("rApl").textContent=nf(V.aplicado,2)+" ha";
+  $("rFai").textContent=nf(larguraEfetiva(),1)+" / "+nf(P.faixa,1)+" m";
+  $("rDist").textContent=nf(Math.hypot(d.x-BASE.x,d.z-BASE.z),0)+" m";
+  const o=V.sonda&&P.desvio?V.sonda:null;
+  $("rObs").hidden=!o;if(o)$("rObs").textContent="Obstáculo à frente · "+nf(Math.max(0,o.d-T50.raioHelice),1)+" m";
+  $("rDesvio").hidden=P.desvio;
+  /* mapa pequeno: contorno, faixas feitas e aeronave */
+  const M=mapaAtual(),W=tm.width,H=tm.height;tg.clearRect(0,0,W,H);
+  tg.fillStyle="rgba(28,40,24,.92)";tg.fillRect(0,0,W,H);
+  if(!M)return;
+  const xs=M.limite.map(p=>p[0]).concat([BASE.x]),zs=M.limite.map(p=>p[1]).concat([BASE.z]);
+  const x0=Math.min(...xs)-12,x1=Math.max(...xs)+12,z0=Math.min(...zs)-12,z1=Math.max(...zs)+12;
+  const esc=Math.min(W/(x1-x0),H/(z1-z0)),ox=(W-(x1-x0)*esc)/2,oz=(H-(z1-z0)*esc)/2;
+  const T=(x,z)=>[ox+(x-x0)*esc,oz+(z-z0)*esc];
+  tg.beginPath();M.limite.forEach((p,i)=>{const [a,b]=T(p[0],p[1]);i?tg.lineTo(a,b):tg.moveTo(a,b)});tg.closePath();
+  tg.fillStyle="rgba(122,101,71,.85)";tg.fill();tg.strokeStyle="#32D583";tg.lineWidth=Math.max(1.5,W/200);tg.stroke();
+  for(const ob of M.obstaculos){tg.fillStyle="rgba(240,68,56,.55)";tg.beginPath();
+    if(ob.tipo==="circulo"){const [a,b]=T(ob.c[0],ob.c[1]);tg.arc(a,b,ob.r*esc,0,7)}
+    else ob.pts.forEach((p,i)=>{const [a,b]=T(p[0],p[1]);i?tg.lineTo(a,b):tg.moveTo(a,b)});
+    tg.fill()}
+  tg.lineWidth=Math.max(1,W/320);
+  for(let i=1;i<rota.length;i++){
+    const a=rota[i-1].p,b=rota[i].p;if(!rota[i].aplica)continue;
+    const [ax,ay]=T(a[0],a[1]),[bx,by]=T(b[0],b[1]);
+    tg.strokeStyle=i<V.i?"#32D583":"rgba(255,255,255,.55)";tg.beginPath();tg.moveTo(ax,ay);tg.lineTo(bx,by);tg.stroke();
+  }
+  {const [a,b]=T(BASE.x,BASE.z);tg.fillStyle="#F5A524";tg.font="700 "+Math.round(W/16)+"px Roboto,Arial";tg.textAlign="center";tg.fillText("H",a,b+W/45)}
+  const [px,py]=T(d.x,d.z),s=W/28;
+  tg.save();tg.translate(px,py);tg.rotate(-V.yaw+Math.PI/2);
+  tg.fillStyle="#fff";tg.strokeStyle="#2F80ED";tg.lineWidth=W/150;
+  tg.beginPath();tg.moveTo(0,-s);tg.lineTo(s*.7,s*.8);tg.lineTo(0,s*.35);tg.lineTo(-s*.7,s*.8);tg.closePath();tg.fill();tg.stroke();tg.restore();
+}
+
+function renderControle(){
+  const c=rcCaixa,H=innerHeight;
+  atualizarFpv();
+  render.setClearColor("#0d0f12",1);render.clear();
+  render.setScissorTest(true);
+  render.setScissor(c.sx,H-c.sy-c.sh,c.sw,c.sh);render.setViewport(c.sx,H-c.sy-c.sh,c.sw,c.sh);
+  render.render(cena,camFpv);
+  render.setScissorTest(false);render.setViewport(0,0,innerWidth,innerHeight);
+  hudControle();
+}
+
+/* visão do operador: o avatar vira para o drone e a câmera olha por cima do ombro dele */
+function mirarOperador(){
+  /* a inclinação já vem limitada em posCamera para o operador continuar no quadro */
+  cam.lookAt(orb.target);
+  cam.updateMatrixWorld();
+}
+const vtmp=new THREE.Vector3();
+function acompanharDrone(dt){
+  if(modoMapa||!grupoOperador.children.length)return;
+  const o=grupoOperador.position,d=drone.position;
+  const alvo=Math.atan2(d.x-o.x,d.z-o.z);
+  if(Math.hypot(d.x-o.x,d.z-o.z)>1.5){
+    let dy=alvo-grupoOperador.rotation.y;while(dy>Math.PI)dy-=2*Math.PI;while(dy<-Math.PI)dy+=2*Math.PI;
+    grupoOperador.rotation.y+=dy*Math.min(1,dt*2.5);
+  }
+}
+
+/* ===================================================================
+   LAÇO
+   =================================================================== */
+let ant=performance.now();
+function quadro(t,frame){
+  if(window.PAUSA_SIM && PAUSA_SIM.pausado){ant=t;return;}
+  if(window.xgVR)window.xgVR.antesQuadro(t,frame);
+  /* dentro do sim.html o campo pode abrir antes da moldura ter o tamanho
+     final (300x150) e o aviso de resize se perder: confere a cada quadro */
+  if(!render.xr.isPresenting&&(render.domElement.clientWidth!==innerWidth||render.domElement.clientHeight!==innerHeight)){
+    cam.aspect=innerWidth/innerHeight;cam.updateProjectionMatrix();render.setSize(innerWidth,innerHeight)}
+  const dtr=Math.min(.05,(t-ant)/1000);ant=t;
+  if(inclina.children.length){
+    if(V.rodando){
+      let resta=dtr*V.mult;
+      while(resta>1e-4){const dt=Math.min(1/60,resta);passo(dt);resta-=dt;if(V.estado==="caiu"&&V.noChao)break}
+      emitir(dtr,V.aplicando);
+    } else emitir(dtr,false);
+    const gira=V.rodando&&!["reabastecendo","concluído","em solo"].includes(V.estado)&&!(V.estado==="caiu"&&V.noChao)&&!(V.xgApito>0);
+    for(const h of helices)h.rotation.y+=h.userData.sentido*dtr*52*(gira?1:0);
+    if(V.estado!=="caiu"){
+      drone.rotation.y=V.yaw+Math.PI/2;
+      /* 19/11/2026: na curva em arco do XAG a aeronave inclina para dentro (V.xgRol, de xgArcoXag); fora dela volta ao nível */
+      V.xgRolA=(V.xgRolA||0)+((V.rodando?V.xgRol||0:0)-(V.xgRolA||0))*Math.min(1,dtr*XG_ARCO_XAG.rolo);
+      inclina.rotation.set(Math.min(.14,V.v*.018),0,Math.abs(V.xgRolA)<1e-4?0:V.xgRolA);
+    }
+    if(!(window.xgVR&&xgVR.ativo))posCamera(false,dtr);
+    const d=drone.position;
+    sol.position.set(d.x+40,d.y+70,d.z+30);sol.target.position.copy(d);
+    hud();desenharRadar();
+  }
+  if(window.xgVR&&xgVR.ativo){
+    xgVR.camera();
+  } else if(modoMapa){
+    quadroMapa(dtr);
+    const o=grupoOperador.position;sol.position.set(o.x+40,o.y+70,o.z+30);sol.target.position.copy(o);
+  } else {
+    /* no operador a câmera olha para cima, para o drone: o OrbitControls não deixa (trava o ângulo e sobe a câmera) */
+    if(telaInicial)orbitarInicio(dtr);else if(vista==="operador")mirarOperador();else orb.update();
+    acompanharDrone(dtr);
+  }
+  if(window.xgVR&&xgVR.ativo)xgVR.renderizar();
+  else if(!modoMapa&&vista==="controle")renderControle();
+  else render.render(cena,cam);
+}
+render.setAnimationLoop((t,frame)=>quadro(t,frame));
+addEventListener("resize",()=>{if(render.xr.isPresenting)return;cam.aspect=innerWidth/innerHeight;cam.updateProjectionMatrix();render.setSize(innerWidth,innerHeight)});
+</script>
+<script src="../js/campo/vr_campo.js?v=367614663b71"></script>
+<script src="../js/campo/vento_opcao.js?v=628db5d4e166"></script>
+<script src="../js/campo/veiculo_fisica.js?v=d9b1c300f374"></script>
+<script src="../js/campo/veiculo.js?v=6c1f010fc0b3"></script>
+<script src="../js/campo/graficos.js?v=9455828cbd12"></script>
+<script src="../js/campo/destruicao.js?v=e198772bcfba"></script>
